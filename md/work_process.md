@@ -4,7 +4,7 @@
 - **Role:** Lead Architect & Cursor AI
 - **Framework:** .NET 8 (WPF)
 - **Platform:** Windows 10 / 11 Desktop
-- **Last Updated:** 2026-02-05 (Phase 4.3 완료: 파일 로깅 시스템 및 전역 예외 처리 구현, 21차)
+- **Last Updated:** 2026-02-05 (빌드 경고 해결 및 코드 정리, 22차)
 
 ## 📌 1. Development Environment (개발 환경 상세)
 이 프로젝트를 이어받는 AI/개발자는 아래 설정을 필수로 확인해야 합니다.
@@ -87,6 +87,39 @@ AI_Mouse/
 
 
 ## 📅 4. Development Log (개발 기록)
+
+### 2026-02-05 (목) - 빌드 경고 해결 및 코드 정리 (22차)
+**[목표]** 빌드 경고(CS8602)를 해결하고, 앱 실행 시 시작 알림 팝업이 두 번 뜨는 버그를 수정한다.
+
+#### Dev Action (Null Safety & Code Cleanup)
+- **Views/SettingsWindow.xaml.cs 수정:**
+  - 59번 줄의 `_viewModel.SettingsSaved` 이벤트 구독 시 null 체크 추가
+  - `if (_viewModel != null)` 조건문으로 감싸서 CS8602 경고 해결
+  - null 조건부 연산자(`?.`) 대신 명시적 null 체크 사용 (코드 가독성 향상)
+
+- **App.xaml 확인:**
+  - `StartupUri` 속성 확인 결과 없음 (이미 정리되어 있음)
+  - `OnStartup`에서 수동으로 초기화하므로 `StartupUri`가 없어야 함 (중복 초기화 방지)
+
+- **중복 MessageBox.Show 호출 확인:**
+  - `App.xaml.cs`의 `OnStartup` 메서드: 125-129번 줄에 한 번만 호출됨 (정상)
+  - `MainViewModel.cs` 생성자: `MessageBox.Show` 호출 없음 (정상)
+  - 중복 호출 없음 확인 완료
+
+#### Tech Details
+- **Null Safety:** nullable 참조 타입(`SettingsViewModel?`)에 대한 명시적 null 체크 추가
+- **코드 품질:** 빌드 경고 제로 달성 (경고 0개, 오류 0개)
+- **중복 방지:** `StartupUri` 제거로 앱 초기화 중복 방지
+- **코드 정리:** 불필요한 중복 호출 확인 및 제거
+
+#### Current Status
+- ✅ `SettingsWindow.xaml.cs`의 CS8602 경고 해결 완료 (null 체크 추가)
+- ✅ `App.xaml`에서 `StartupUri` 속성 확인 완료 (없음, 정상)
+- ✅ `App.xaml.cs`와 `MainViewModel.cs`에서 중복 `MessageBox.Show` 확인 완료 (중복 없음)
+- ✅ 빌드 성공 (경고 0개, 오류 0개)
+- 코드 품질 개선 및 빌드 경고 해결 완료
+
+---
 
 ### 2026-02-05 (목) - Phase 4.3 완료: 파일 로깅 시스템 및 전역 예외 처리 구현 (21차)
 **[목표]** 프로젝트의 마지막 단계인 **Phase 4.3**을 수행한다. 앱의 안정성을 위해 **파일 로깅 시스템**과 **전역 예외 처리(Global Exception Handling)**를 구현하고, 종료 시 리소스 해제를 보장한다.
@@ -265,7 +298,6 @@ AI_Mouse/
 - ResultWindow 스크롤 포커스 문제 해결 완료, 마우스 오버 시 즉시 스크롤 작동
 
 ---
-
 
 ### 2026-02-05 (목) - ResultWindow UX 개선: 항상 위 해제, 최소화 버튼, 스크롤 포커스 수정 (18차)
 **[목표]** **ResultWindow**의 UX를 개선한다. 항상 위 기능을 해제하여 다른 창 뒤로 이동 가능하게 하고, 최소화 버튼을 추가하며, 스크롤 포커스 문제를 해결하여 마우스 휠이 즉시 작동하도록 개선.

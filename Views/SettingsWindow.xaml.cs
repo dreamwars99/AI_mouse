@@ -56,10 +56,13 @@ namespace AI_Mouse.Views
             }
 
             // 설정 저장 완료 이벤트 구독 (저장 후 창 닫기)
-            _viewModel.SettingsSaved += (s, e) =>
+            if (_viewModel != null)
             {
-                this.Close();
-            };
+                _viewModel.SettingsSaved += (s, e) =>
+                {
+                    this.Close();
+                };
+            }
         }
 
         /// <summary>
