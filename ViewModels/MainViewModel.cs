@@ -16,6 +16,7 @@ namespace AI_Mouse.ViewModels
     {
         private readonly IGlobalHookService _hookService;
         private readonly IScreenCaptureService _captureService;
+        private readonly IAudioRecorderService _audioService;
         private OverlayWindow? _overlayWindow;
         private OverlayViewModel? _overlayViewModel;
 
@@ -28,10 +29,12 @@ namespace AI_Mouse.ViewModels
         /// </summary>
         /// <param name="hookService">전역 마우스 훅 서비스 (DI 주입)</param>
         /// <param name="captureService">화면 캡처 서비스 (DI 주입)</param>
-        public MainViewModel(IGlobalHookService hookService, IScreenCaptureService captureService)
+        /// <param name="audioService">오디오 녹음 서비스 (DI 주입)</param>
+        public MainViewModel(IGlobalHookService hookService, IScreenCaptureService captureService, IAudioRecorderService audioService)
         {
             _hookService = hookService ?? throw new ArgumentNullException(nameof(hookService));
             _captureService = captureService ?? throw new ArgumentNullException(nameof(captureService));
+            _audioService = audioService ?? throw new ArgumentNullException(nameof(audioService));
 
             // 마우스 액션 이벤트 구독
             _hookService.MouseAction += OnMouseAction;
@@ -117,6 +120,18 @@ namespace AI_Mouse.ViewModels
                 _overlayViewModel.Reset();
             }
 
+            // 오디오 녹음 시작
+            try
+            {
+                _audioService.StartRecording();
+                Debug.WriteLine("[MainViewModel] 오디오 녹음 시작");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[MainViewModel] 오디오 녹음 시작 중 오류: {ex.Message}");
+                // 마이크가 없거나 권한이 없는 경우에도 계속 진행
+            }
+
             Debug.WriteLine($"[MainViewModel] 드래그 시작: ({x}, {y})");
         }
 
@@ -187,9 +202,22 @@ namespace AI_Mouse.ViewModels
                     // 클립보드에 복사
                     await _captureService.CopyToClipboardAsync(capturedImage);
 
-                    // 검증용 메시지 박스 출력
+                    // 오디오 녹음 중지 및 파일 경로 받기
+                    string audioPath = string.Empty;
+                    try
+                    {
+                        audioPath = await _audioService.StopRecordingAsync();
+                        Debug.WriteLine($"[MainViewModel] 오디오 녹음 중지 완료: {audioPath}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"[MainViewModel] 오디오 녹음 중지 중 오류: {ex.Message}");
+                        // 오디오 녹음 오류는 무시하고 계속 진행
+                    }
+
+                    // 검증용 메시지 박스 출력 (오디오 경로 포함)
                     MessageBox.Show(
-                        "캡처 완료! 클립보드를 확인하세요.",
+                        $"캡처 및 녹음 완료!\n이미지: 클립보드\n오디오: {audioPath}",
                         "캡처 성공",
                         MessageBoxButton.OK,
                         MessageBoxImage.Information);
@@ -204,6 +232,18 @@ namespace AI_Mouse.ViewModels
                         "오류",
                         MessageBoxButton.OK,
                         MessageBoxImage.Error);
+                }
+            }
+            else
+            {
+                // 영역이 유효하지 않아도 오디오 녹음은 중지해야 함
+                try
+                {
+                    await _audioService.StopRecordingAsync();
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[MainViewModel] 오디오 녹음 중지 중 오류: {ex.Message}");
                 }
             }
         }

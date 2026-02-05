@@ -27,7 +27,7 @@ sequenceDiagram
     
     activate VM
     VM->>Overlay: Show() (전체 화면 투명 오버레이)
-    VM->>Audio: StartRecording()
+    VM->>Audio: StartRecording() ✅
     VM->>VM: State = Listening
     deactivate VM
     
@@ -40,8 +40,8 @@ sequenceDiagram
     
     activate VM
     VM->>Overlay: Hide()
-    VM->>Capture: CaptureRegion(rect)
-    VM->>Audio: StopRecording()
+    VM->>Capture: CaptureRegion(rect) ✅
+    VM->>Audio: StopRecording() ✅
     VM->>VM: State = Processing
     deactivate VM
     
@@ -50,7 +50,7 @@ sequenceDiagram
     deactivate Capture
     
     activate Audio
-    Audio-->>VM: WAV 파일 경로 (녹음된 오디오)
+    Audio-->>VM: WAV 파일 경로 (녹음된 오디오) ✅
     deactivate Audio
     
     activate VM
@@ -201,6 +201,9 @@ MessageBox.Show("AI Mouse가 백그라운드에서 실행되었습니다.\n트�
 - ✅ `IScreenCaptureService` 및 `ScreenCaptureService` 구현 완료 (Phase 2.1)
 - ✅ `DpiHelper` 유틸리티 구현 완료 (Phase 2.1)
 - ✅ 화면 캡처 및 클립보드 복사 기능 구현 완료 (Phase 2.1)
+- ✅ `IAudioRecorderService` 및 `AudioRecorderService` 구현 완료 (Phase 2.2)
+- ✅ NAudio 패키지 설치 완료 (Phase 2.2)
+- ✅ 마이크 음성 녹음 및 WAV 파일 저장 기능 구현 완료 (Phase 2.2)
 
 ---
 
@@ -297,24 +300,23 @@ public interface IScreenCaptureService
 - `System.Drawing.Common` 패키지 사용 ✅
 - 리소스 안전 관리 (`using` 문으로 자동 해제) ✅
 
-### 4.3. IAudioRecorderService
+### 4.3. IAudioRecorderService ✅ 구현 완료
 마이크 입력을 WAV 파일로 녹음합니다.
 
 ```csharp
 public interface IAudioRecorderService : IDisposable
 {
-    event EventHandler<AudioLevelEventArgs>? AudioLevelChanged;
-    
     void StartRecording();
     Task<string> StopRecordingAsync(); // WAV 파일 경로 반환
-    bool IsRecording { get; }
 }
 ```
 
 **구현 세부사항:**
-- NAudio (`WaveInEvent`) 사용
-- PCM 16bit, Mono, 16kHz/24kHz 포맷
-- 임시 폴더에 저장 후 정리 로직
+- NAudio (`WaveInEvent`) 사용 ✅
+- PCM 16bit, Mono, 16kHz 포맷 (Gemini API 호환) ✅
+- `Path.GetTempPath()/AI_Mouse/audio_temp.wav`에 저장 (덮어쓰기 모드) ✅
+- `TaskCompletionSource`를 사용한 비동기 처리 ✅
+- `WaveFileWriter` Dispose로 파일 잠금 해제 보장 ✅
 
 ### 4.4. IGeminiService
 Google Gemini API와 통신합니다.
@@ -362,19 +364,19 @@ Clipboard.SetImage (클립보드 복사) ✅
 ### 5.2. 오디오 데이터 흐름
 
 ```
-마이크 입력 (WaveInEvent)
+마이크 입력 (WaveInEvent) ✅
     ↓
-AudioRecorderService.StartRecording()
+AudioRecorderService.StartRecording() ✅
     ↓
-NAudio 버퍼 수집 (PCM)
+NAudio 버퍼 수집 (PCM 16bit, Mono, 16kHz) ✅
     ↓
-AudioRecorderService.StopRecordingAsync()
+AudioRecorderService.StopRecordingAsync() ✅
     ↓
-WAV 파일로 저장 (임시 폴더)
+WAV 파일로 저장 (Path.GetTempPath()/AI_Mouse/audio_temp.wav) ✅
     ↓
-파일 경로 반환
+파일 경로 반환 ✅
     ↓
-GeminiService.SendMultimodalQueryAsync(image, audioPath, prompt)
+[Phase 3.1 예정] GeminiService.SendMultimodalQueryAsync(image, audioPath, prompt)
 ```
 
 ---
@@ -385,9 +387,9 @@ GeminiService.SendMultimodalQueryAsync(image, audioPath, prompt)
 
 다음 서비스들은 `IDisposable`을 구현하여 리소스를 안전하게 해제합니다:
 
-- **GlobalHookService:** `UnhookWindowsHookEx` 호출
-- **AudioRecorderService:** `WaveInEvent.Dispose()`
-- **ScreenCaptureService:** `Bitmap.Dispose()`, `Graphics.Dispose()`
+- **GlobalHookService:** `UnhookWindowsHookEx` 호출 ✅
+- **AudioRecorderService:** `WaveInEvent.Dispose()`, `WaveFileWriter.Dispose()` ✅
+- **ScreenCaptureService:** `Bitmap.Dispose()`, `Graphics.Dispose()` ✅
 
 **App.xaml.cs**에서 앱 종료 시:
 
@@ -442,7 +444,7 @@ protected override void OnExit(ExitEventArgs e)
 | **OverlayViewModel** | 드래그 사각형 좌표 계산 | 없음 (순수 계산) |
 | **GlobalHookService** | Win32 Hook 관리, 이벤트 전파 | NativeMethods |
 | **ScreenCaptureService** | 화면 캡처, 이미지 변환 | NativeMethods, DpiHelper |
-| **AudioRecorderService** | 오디오 녹음, WAV 저장 | NAudio |
+| **AudioRecorderService** | 오디오 녹음, WAV 저장 | NAudio ✅ |
 | **GeminiService** | API 통신, 응답 파싱 | Google.GenerativeAI |
 | **ResultWindow** | 마크다운 렌더링, UI 표시 | Markdig.Wpf |
 
@@ -460,4 +462,4 @@ protected override void OnExit(ExitEventArgs e)
 ---
 
 **Last Updated:** 2026-02-05  
-**Version:** 1.6 (Phase 2.1 완료 - DPI 보정 유틸리티 및 화면 캡처 서비스 구현 완료)
+**Version:** 1.7 (Phase 2.2 완료 - NAudio 기반 마이크 음성 녹음 서비스 구현 완료)

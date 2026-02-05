@@ -45,14 +45,14 @@ AI_Mouse/
 │   ├── Interfaces/                # 서비스 인터페이스 ✅ 생성됨
 │   │   ├── IGlobalHookService.cs          # [Phase 1.2] 전역 입력 감지 ✅ 생성됨
 │   │   ├── IScreenCaptureService.cs       # [Phase 2.1] 화면 캡처 ✅ 생성됨
-│   │   ├── IAudioRecorderService.cs       # [Phase 2.2] 음성 녹음 ⏳ 생성 예정
+│   │   ├── IAudioRecorderService.cs       # [Phase 2.2] 음성 녹음 ✅ 생성됨
 │   │   ├── IGeminiService.cs              # [Phase 3.1] Gemini API ⏳ 생성 예정
 │   │   └── ITrayService.cs                # 트레이 아이콘 관리 ⏳ 생성 예정
 │   │
 │   └── Implementations/           # 서비스 구현체 ✅ 생성됨
 │       ├── GlobalHookService.cs            # [Phase 1.2] Win32 Hook 구현 ✅ 생성됨
 │       ├── ScreenCaptureService.cs        # [Phase 2.1] GDI+ 캡처 구현 ✅ 생성됨
-│       ├── AudioRecorderService.cs        # [Phase 2.2] NAudio 녹음 구현 ⏳ 생성 예정
+│       ├── AudioRecorderService.cs        # [Phase 2.2] NAudio 녹음 구현 ✅ 생성됨
 │       ├── GeminiService.cs               # [Phase 3.1] API 클라이언트 구현 ⏳ 생성 예정
 │       └── TrayService.cs                 # 트레이 아이콘 구현 ⏳ 생성 예정
 │
@@ -158,7 +158,8 @@ App.xaml.cs (Bootstrapper)
 │   │   ├── Transient: OverlayViewModel ✅ (Phase 1.3)
 │   │   ├── Transient: OverlayWindow ✅ (Phase 1.3)
 │   │   ├── Singleton: IGlobalHookService → GlobalHookService ✅
-│   │   └── Singleton: IScreenCaptureService → ScreenCaptureService ✅ (Phase 2.1)
+│   │   ├── Singleton: IScreenCaptureService → ScreenCaptureService ✅ (Phase 2.1)
+│   │   └── Singleton: IAudioRecorderService → AudioRecorderService ✅ (Phase 2.2)
 │   │
 │   ├── ServiceProvider 빌드 ✅
 │   ├── MainWindow 인스턴스 생성 (DI) ✅
@@ -243,8 +244,8 @@ App.xaml.cs (Bootstrapper)
        ├── OverlayWindow.Hide() ✅
        ├── 최종 Rect 로그 출력 (Debug) ✅
        ├── OverlayViewModel.Reset() ✅
-       ├── ScreenCaptureService.CaptureRegionAsync() (Phase 2.1 예정)
-       ├── AudioRecorderService.StopRecordingAsync() (Phase 2.2 예정)
+       ├── ScreenCaptureService.CaptureRegionAsync() ✅ (Phase 2.1)
+       ├── AudioRecorderService.StopRecordingAsync() ✅ (Phase 2.2)
        └── GeminiService.SendMultimodalQueryAsync() (Phase 3.1 예정)
            └── ResultWindow.Show(response) (Phase 4.1 예정)
 ```
@@ -398,4 +399,4 @@ graph LR
 ---
 
 **Last Updated:** 2026-02-05  
-**Version:** 1.6 (Phase 2.1 완료 - DPI 보정 유틸리티 및 화면 캡처 서비스 구현 완료)
+**Version:** 1.7 (Phase 2.2 완료 - NAudio 기반 마이크 음성 녹음 서비스 구현 완료)

@@ -44,29 +44,32 @@ namespace AI_Mouse
             // 5. ScreenCaptureService를 싱글톤으로 등록
             services.AddSingleton<IScreenCaptureService, ScreenCaptureService>();
 
-            // 6. ServiceProvider 빌드
+            // 6. AudioRecorderService를 싱글톤으로 등록
+            services.AddSingleton<IAudioRecorderService, AudioRecorderService>();
+
+            // 7. ServiceProvider 빌드
             _serviceProvider = services.BuildServiceProvider();
 
-            // 6. MainWindow 인스턴스를 DI로 생성
+            // 8. MainWindow 인스턴스를 DI로 생성
             var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
 
-            // 7. MainViewModel을 DI로 생성 (IGlobalHookService 자동 주입)
+            // 9. MainViewModel을 DI로 생성 (IGlobalHookService, IScreenCaptureService, IAudioRecorderService 자동 주입)
             var mainViewModel = _serviceProvider.GetRequiredService<MainViewModel>();
 
-            // 8. MainWindow.DataContext에 MainViewModel 설정
+            // 10. MainWindow.DataContext에 MainViewModel 설정
             mainWindow.DataContext = mainViewModel;
 
-            // 9. MainWindow를 숨김 상태로 유지 (초기 상태)
+            // 11. MainWindow를 숨김 상태로 유지 (초기 상태)
             mainWindow.Hide();
 
-            // 10. OverlayWindow를 미리 생성하되 Hide() 상태로 대기 (반응 속도 최적화)
+            // 12. OverlayWindow를 미리 생성하되 Hide() 상태로 대기 (반응 속도 최적화)
             _overlayWindow = _serviceProvider.GetRequiredService<OverlayWindow>();
             _overlayWindow.Hide();
 
-            // 11. MainViewModel에 OverlayWindow 참조 전달 (Show/Hide를 위해 필요)
+            // 13. MainViewModel에 OverlayWindow 참조 전달 (Show/Hide를 위해 필요)
             mainViewModel.SetOverlayWindow(_overlayWindow);
 
-            // 12. 리소스에서 TaskbarIcon을 찾아 _trayIcon 멤버 변수에 할당
+            // 14. 리소스에서 TaskbarIcon을 찾아 _trayIcon 멤버 변수에 할당
             _trayIcon = (TaskbarIcon)FindResource("TrayIcon");
             
             // 빈 아이콘 에러 방지를 위해 System.Drawing.SystemIcons.Application 할당
@@ -75,7 +78,7 @@ namespace AI_Mouse
                 _trayIcon.Icon = SystemIcons.Application;
             }
 
-            // 13. GlobalHookService를 가져와서 훅 시작
+            // 15. GlobalHookService를 가져와서 훅 시작
             var hookService = _serviceProvider.GetRequiredService<IGlobalHookService>();
             hookService.Start();
 
@@ -103,6 +106,17 @@ namespace AI_Mouse
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"[App] 훅 중지 중 오류: {ex.Message}");
+                }
+
+                try
+                {
+                    // AudioRecorderService 정리 (IDisposable)
+                    var audioService = _serviceProvider.GetService<IAudioRecorderService>();
+                    audioService?.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[App] 오디오 서비스 정리 중 오류: {ex.Message}");
                 }
             }
 

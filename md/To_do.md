@@ -2,7 +2,7 @@
 
 ## 📋 현재 상태 요약 (Current Status Summary)
 
-**프로젝트 상태:** Phase 2.1 완료 ✅ (DPI 보정 유틸리티 및 화면 캡처 서비스 구현 완료)
+**프로젝트 상태:** Phase 2.2 완료 ✅ (NAudio 기반 마이크 음성 녹음 서비스 구현 완료)
 
 **완료된 주요 기능:**
 - ✅ 프로젝트 생성 및 환경 설정 (.NET 8 WPF)
@@ -17,6 +17,9 @@
 - ✅ DPI 보정 유틸리티 구현 완료 (DpiHelper)
 - ✅ 화면 캡처 서비스 구현 완료 (IScreenCaptureService, ScreenCaptureService)
 - ✅ 클립보드 복사 기능 구현 완료
+- ✅ NAudio 패키지 설치 완료 (v2.2.1)
+- ✅ 오디오 녹음 서비스 구현 완료 (IAudioRecorderService, AudioRecorderService)
+- ✅ 마이크 음성 녹음 및 WAV 파일 저장 기능 구현 완료
 
 ---
 
@@ -109,6 +112,21 @@
 - ✅ `HandleMouseUp`에 화면 캡처 및 클립보드 복사 로직 구현 완료
 - ✅ `App.xaml.cs`에 `IScreenCaptureService` 싱글톤 등록 완료
 
+### Phase 2.2: 음성 녹음 (Audio Recording) ✅ 완료
+- ✅ `NAudio` 패키지 설치 완료 (v2.2.1)
+- ✅ `Services/Interfaces/IAudioRecorderService.cs` 생성 완료 (인터페이스 정의)
+- ✅ `Services/Implementations/AudioRecorderService.cs` 생성 완료 (NAudio 기반 녹음 및 WAV 저장)
+- ✅ `WaveInEvent` 시작/중지 로직 구현 완료
+- ✅ 트리거 Down → 녹음 시작 로직 구현 완료 (`HandleMouseDown`)
+- ✅ 트리거 Up → 녹음 중지 및 파일 경로 반환 로직 구현 완료 (`HandleMouseUp`)
+- ✅ PCM 16bit, Mono, 16kHz WAV 포맷 저장 완료 (Gemini API 호환)
+- ✅ 임시 폴더 관리 및 파일 정리 로직 구현 완료 (`Path.GetTempPath()/AI_Mouse/audio_temp.wav`)
+- ✅ `TaskCompletionSource`를 사용한 비동기 처리 구현 완료
+- ✅ `WaveFileWriter` Dispose로 파일 잠금 해제 보장 완료
+- ✅ `MainViewModel`에 `IAudioRecorderService` 주입 및 녹음 로직 구현 완료
+- ✅ `App.xaml.cs`에 `IAudioRecorderService` 싱글톤 등록 완료
+- ✅ `OnExit`에서 `AudioRecorderService` Dispose 호출 추가 완료
+
 ---
 
 ## 🧊 Backlog (예정된 작업)
@@ -177,18 +195,18 @@
   - [x] `NativeMethods`에 DPI 관련 P/Invoke 선언 추가 ✅
   - [x] `MainViewModel`의 `HandleMouseMove`에 DPI 변환 적용 ✅
 
-#### Phase 2.2: 음성 녹음 (Audio Recording)
-- [ ] **NAudio 패키지 설치**
-  - [ ] `NAudio` NuGet 패키지 설치
+#### Phase 2.2: 음성 녹음 (Audio Recording) ✅ 완료
+- [x] **NAudio 패키지 설치** ✅
+  - [x] `NAudio` NuGet 패키지 설치 ✅ (v2.2.1)
 
-- [ ] **AudioRecorderService 구현**
-  - [ ] `Services/Interfaces/IAudioRecorderService.cs` 생성
-  - [ ] `Services/Implementations/AudioRecorderService.cs` 구현
-  - [ ] `WaveInEvent` 시작/중지 로직
-  - [ ] 트리거 Down → 녹음 시작
-  - [ ] 트리거 Up → 녹음 중지
-  - [ ] PCM 16bit, Mono, 16kHz/24kHz WAV 포맷 저장
-  - [ ] 임시 폴더 관리 및 파일 정리 로직
+- [x] **AudioRecorderService 구현** ✅
+  - [x] `Services/Interfaces/IAudioRecorderService.cs` 생성 ✅
+  - [x] `Services/Implementations/AudioRecorderService.cs` 구현 ✅
+  - [x] `WaveInEvent` 시작/중지 로직 ✅
+  - [x] 트리거 Down → 녹음 시작 ✅
+  - [x] 트리거 Up → 녹음 중지 ✅
+  - [x] PCM 16bit, Mono, 16kHz WAV 포맷 저장 ✅ (Gemini API 호환)
+  - [x] 임시 폴더 관리 및 파일 정리 로직 ✅ (`Path.GetTempPath()/AI_Mouse/audio_temp.wav`)
   - [ ] 오디오 레벨 미터링 (선택 사항)
 
 ### 🟢 Low Priority (낮은 우선순위)
@@ -263,4 +281,4 @@
 
 ---
 
-**마지막 업데이트**: 2026-02-05 (Phase 2.1 완료 - DPI 보정 유틸리티 및 화면 캡처 서비스 구현 완료)
+**마지막 업데이트**: 2026-02-05 (Phase 2.2 완료 - NAudio 기반 마이크 음성 녹음 서비스 구현 완료)

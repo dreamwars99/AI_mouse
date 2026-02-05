@@ -4,7 +4,7 @@
 - **Role:** Lead Architect & Cursor AI
 - **Framework:** .NET 8 (WPF)
 - **Platform:** Windows 10 / 11 Desktop
-- **Last Updated:** 2026-02-05 (Phase 2.1 완료 - DPI 보정 유틸리티 및 화면 캡처 서비스 구현 완료)
+- **Last Updated:** 2026-02-05 (Phase 2.2 완료 - NAudio 기반 마이크 음성 녹음 서비스 구현 완료)
 
 ## 📌 1. Development Environment (개발 환경 상세)
 이 프로젝트를 이어받는 AI/개발자는 아래 설정을 필수로 확인해야 합니다.
@@ -18,8 +18,9 @@
   - Purpose: 의존성 주입 (DI) 컨테이너 구성
 - **Hardcodet.NotifyIcon.Wpf**
   - Purpose: 시스템 트레이 아이콘 및 백그라운드 상주 기능
-- **NAudio** (Phase 2 예정)
+- **NAudio** ✅ (Phase 2.2 완료)
   - Purpose: 마이크 오디오 녹음 및 WAV 파일 저장
+  - Version: 2.2.1
 - **Google.Cloud.AIPlatform** (Phase 3 예정)
   - Purpose: Gemini API 연동 (Multimodal Input)
 
@@ -66,6 +67,88 @@ AI_Mouse/
 - `AudioRecorderService`: NAudio 기반 음성 녹음.
 
 ## 📅 4. Development Log (개발 기록)
+
+### 2026-02-05 (목) - Phase 2.2 NAudio 기반 마이크 음성 녹음 서비스 구현 (11차)
+**[목표]** `NAudio` 라이브러리를 사용하여 **마이크 음성 녹음 서비스(AudioRecorderService)**를 구현하고, 드래그 동작과 연동하여 **WAV 파일**을 생성하는 기능을 완성.
+
+#### Dev Action (Audio Recording Service)
+- **AI_Mouse.csproj 수정:**
+  - `NAudio` NuGet 패키지 추가 (v2.2.1)
+  - 마이크 입력 캡처 및 WAV 파일 저장을 위한 필수 패키지
+
+- **Services/Interfaces/IAudioRecorderService.cs 생성:**
+  - `IAudioRecorderService` 인터페이스 정의 (`IDisposable` 상속)
+  - `StartRecording()` 메서드: 녹음 시작
+  - `StopRecordingAsync()` 메서드: 녹음 중지 및 WAV 파일 경로 반환 (`Task<string>`)
+  - 간결한 인터페이스 설계 (이벤트 기반 오디오 레벨 미터링은 선택 사항으로 제외)
+
+- **Services/Implementations/AudioRecorderService.cs 생성:**
+  - `IAudioRecorderService` 인터페이스 구현
+  - `StartRecording()` 구현:
+    - `WaveInEvent` 초기화 (16kHz, 16bit, Mono - Gemini API 호환 포맷)
+    - `Path.GetTempPath()/AI_Mouse` 폴더 생성 (없으면 자동 생성)
+    - 출력 파일 경로 설정: `audio_temp.wav` (덮어쓰기 모드)
+    - `WaveFileWriter` 초기화 및 데이터 수신 이벤트 핸들러 등록
+    - `WaveInEvent.StartRecording()` 호출하여 녹음 시작
+    - 예외 처리: 마이크 없음/권한 없음 시에도 앱이 계속 동작하도록 처리
+  - `StopRecordingAsync()` 구현:
+    - `TaskCompletionSource`를 사용한 비동기 처리
+    - `WaveInEvent.StopRecording()` 호출
+    - `RecordingStopped` 이벤트 대기 (녹음 완료 보장)
+    - `WaveFileWriter.Dispose()` 호출로 파일 스트림 확실히 닫기 (파일 잠금 해제)
+    - 파일 경로 반환
+  - `OnDataAvailable` 이벤트 핸들러: 오디오 버퍼를 `WaveFileWriter`에 쓰기
+  - `OnRecordingStopped` 이벤트 핸들러: `TaskCompletionSource` 완료 및 리소스 정리
+  - `Cleanup()` 메서드: `WaveFileWriter`와 `WaveInEvent` 리소스 안전 해제
+  - `Dispose()` 패턴 구현: `IDisposable` 인터페이스 준수
+
+- **ViewModels/MainViewModel.cs 수정:**
+  - 생성자에 `IAudioRecorderService` 주입 추가 (`_audioService` 필드)
+  - `HandleMouseDown` 메서드 수정:
+    - 기존 오버레이 표시 로직 유지
+    - `_audioService.StartRecording()` 호출 추가
+    - 예외 처리: 마이크 없음/권한 없음 시에도 계속 진행 (디버그 로그만 출력)
+  - `HandleMouseUp` 메서드 수정:
+    - 기존 화면 캡처 로직 유지
+    - `await _audioService.StopRecordingAsync()` 호출 추가하여 오디오 파일 경로 받기
+    - 검증용 `MessageBox` 메시지 수정: "캡처 및 녹음 완료!\n이미지: 클립보드\n오디오: {audioPath}"
+    - 유효하지 않은 영역인 경우에도 오디오 녹음은 중지하도록 처리
+    - 예외 처리: 오디오 녹음 오류는 무시하고 계속 진행
+
+- **App.xaml.cs 수정:**
+  - `IAudioRecorderService` → `AudioRecorderService` 싱글톤 등록 추가
+  - DI 컨테이너에 서비스 등록 순서 명확화 (주석 번호 업데이트)
+  - `OnExit` 메서드 수정:
+    - `AudioRecorderService` Dispose 호출 추가 (`IDisposable` 리소스 정리)
+    - 예외 처리 추가 (오디오 서비스 정리 실패 시에도 앱 종료 보장)
+
+#### Tech Details
+- **NAudio 라이브러리:** Windows 오디오 API를 래핑한 .NET 라이브러리로 마이크 입력 캡처 및 WAV 파일 저장 제공
+- **오디오 포맷:** PCM 16bit, Mono, 16kHz (Gemini API 호환성을 위해 표준 포맷 사용)
+- **파일 저장:** `Path.GetTempPath()/AI_Mouse/audio_temp.wav`에 저장 (덮어쓰기 모드로 매번 새로 생성)
+- **비동기 처리:** `TaskCompletionSource`를 사용하여 `RecordingStopped` 이벤트가 발생할 때까지 안전하게 대기
+- **리소스 관리:** `WaveFileWriter.Dispose()`를 반드시 호출하여 파일 스트림을 닫아야 파일 잠금이 풀림 (중요!)
+- **예외 처리:** 마이크가 없거나 권한이 없는 경우에도 앱이 계속 동작하도록 처리 (디버그 로그만 출력)
+- **파일 잠금 해제:** `WaveFileWriter`를 `Dispose()`하지 않으면 파일이 잠겨서 다른 프로세스에서 접근 불가
+
+#### Current Status
+- ✅ `NAudio` 패키지 설치 완료 (v2.2.1)
+- ✅ `IAudioRecorderService.cs` 생성 완료 (인터페이스 정의)
+- ✅ `AudioRecorderService.cs` 생성 완료 (NAudio 기반 녹음 및 WAV 저장)
+- ✅ `WaveInEvent` 시작/중지 로직 구현 완료
+- ✅ 트리거 Down → 녹음 시작 로직 구현 완료 (`HandleMouseDown`)
+- ✅ 트리거 Up → 녹음 중지 및 파일 경로 반환 로직 구현 완료 (`HandleMouseUp`)
+- ✅ PCM 16bit, Mono, 16kHz WAV 포맷 저장 완료 (Gemini API 호환)
+- ✅ 임시 폴더 관리 및 파일 정리 로직 구현 완료
+- ✅ `TaskCompletionSource`를 사용한 비동기 처리 구현 완료
+- ✅ `WaveFileWriter` Dispose로 파일 잠금 해제 보장 완료
+- ✅ `MainViewModel`에 `IAudioRecorderService` 주입 및 녹음 로직 구현 완료
+- ✅ `App.xaml.cs`에 `IAudioRecorderService` 싱글톤 등록 완료
+- ✅ `OnExit`에서 `AudioRecorderService` Dispose 호출 추가 완료
+- ✅ 드래그 종료 시 화면 캡처와 함께 오디오 녹음 동작 확인
+- Phase 2.2 완전히 완료, 다음 단계: Phase 3.1 Gemini API 연동 (Intelligence Layer) 구현 준비
+
+---
 
 ### 2026-02-05 (목) - Phase 2.1 DPI 보정 유틸리티 및 화면 캡처 서비스 구현 (10차)
 **[목표]** **DPI 보정 유틸리티(DpiHelper)**와 **GDI+ 기반 화면 캡처 서비스(ScreenCaptureService)**를 구현하고, 드래그 종료 시 해당 영역을 **이미지(BitmapSource)**로 변환하여 클립보드에 복사하는 기능을 완성.
