@@ -163,12 +163,18 @@ App.xaml.cs (Bootstrapper)
 │   ├── MainWindow 인스턴스 생성 (DI) ✅
 │   ├── MainWindow.DataContext = MainViewModel (주입) ✅
 │   ├── MainWindow.Hide() 호출 ✅
-│   └── TaskbarIcon 표시 ✅
+│   ├── TaskbarIcon 표시 및 아이콘 할당 ✅
+│   └── MessageBox 검증 메시지 출력 ✅
+│
+├── Settings_Click() ✅ 구현 완료
+│   └── 임시 알림 메시지 표시 (Phase 4.2 예정 안내)
+│
+├── Exit_Click() ✅ 구현 완료
+│   └── Application.Current.Shutdown()
 │
 └── OnExit() ✅ 구현 완료
     ├── TaskbarIcon.Dispose() ✅
     └── ServiceProvider.Dispose() (리소스 정리) ✅
-```
 
 ---
 
@@ -191,9 +197,13 @@ App.xaml.cs (Bootstrapper)
    │   └── Hide() 호출로 숨김 처리 ✅
    │
    ├── 5. TaskbarIcon 표시 ✅
-   │   └── 시스템 트레이에 아이콘 표시
+   │   ├── 시스템 트레이에 아이콘 표시
+   │   └── SystemIcons.Application 할당 (빈 아이콘 방지)
    │
-   └── 6. 앱이 백그라운드에서 대기 (Idle 상태) ✅
+   ├── 6. MessageBox 검증 메시지 출력 ✅
+   │   └── "AI Mouse가 백그라운드에서 실행되었습니다." 안내
+   │
+   └── 7. 앱이 백그라운드에서 대기 (Idle 상태) ✅
        └── (Phase 1.2에서 GlobalHookService 시작 예정)
 ```
 
@@ -374,4 +384,4 @@ graph LR
 ---
 
 **Last Updated:** 2026-02-05  
-**Version:** 1.2 (Phase 1.1 완료 - DI 컨테이너 구성 및 트레이 아이콘 구현 완료)
+**Version:** 1.3 (Phase 1.1 완료 - UX 피드백 및 검증 기능 추가 완료)

@@ -4,7 +4,7 @@
 - **Role:** Lead Architect & Cursor AI
 - **Framework:** .NET 8 (WPF)
 - **Platform:** Windows 10 / 11 Desktop
-- **Last Updated:** 2026-02-05 (Phase 1.1 DI 컨테이너 구성 및 시스템 트레이 아이콘 구현 완료)
+- **Last Updated:** 2026-02-05 (Phase 1.1 완료 - UX 피드백 및 검증 기능 추가 완료)
 
 ## 📌 1. Development Environment (개발 환경 상세)
 이 프로젝트를 이어받는 AI/개발자는 아래 설정을 필수로 확인해야 합니다.
@@ -66,6 +66,46 @@ AI_Mouse/
 - `AudioRecorderService`: NAudio 기반 음성 녹음.
 
 ## 📅 4. Development Log (개발 기록)
+
+### 2026-02-05 (목) - Phase 1.1 UX 피드백 및 검증 기능 추가 (7차)
+**[목표]** Phase 1.1의 핵심인 **DI 컨테이너 구성**과 **트레이 아이콘** 구현을 완료하고, 실행 여부를 확인할 수 있도록 **검증용 메시지 박스** 및 이벤트 핸들러를 추가하여 사용자 피드백을 개선.
+
+#### Dev Action (UX Feedback & Verification)
+- **App.xaml 수정:**
+  - `ToolTipText`를 "AI Mouse (Running)"으로 변경하여 실행 상태 명확히 표시
+  - ContextMenu의 '설정' 메뉴에 `Settings_Click` 이벤트 핸들러 연결
+  - '종료' 메뉴의 이벤트 핸들러를 `Exit_Click`으로 변경 (기존 `ExitMenuItem_Click`에서 리팩토링)
+  - 메뉴 항목에 영문 표기 추가 ("설정(Settings)", "종료(Exit)")
+
+- **App.xaml.cs 수정:**
+  - `OnStartup` 메서드에 검증용 `MessageBox` 추가:
+    - "AI Mouse가 백그라운드에서 실행되었습니다.\n트레이 아이콘을 우클릭해보세요." 메시지 표시
+    - 앱 실행 직후 사용자에게 트레이 아이콘 존재를 알림
+  - 아이콘 할당 방식을 `SystemIcons.Application` 직접 할당으로 변경 (기존 `Icon.FromHandle` 방식에서 개선)
+  - `Settings_Click` 이벤트 핸들러 구현:
+    - "설정 창은 추후 구현될 예정입니다. (Phase 4.2)" 임시 알림 메시지 표시
+  - `Exit_Click` 이벤트 핸들러 구현:
+    - `Application.Current.Shutdown()` 호출하여 앱 정상 종료
+
+- **To_do.md 업데이트:**
+  - UX 피드백 및 검증 항목을 완료(`[x]`)로 표시
+  - 모든 하위 항목(MessageBox 출력, 설정 메뉴 팝업, 아이콘 할당) 완료 표시
+
+#### Tech Details
+- **UX 피드백:** 앱 실행 직후 `MessageBox`를 통해 사용자에게 백그라운드 실행 상태를 명확히 알림
+- **이벤트 핸들러:** 트레이 메뉴의 모든 항목에 적절한 이벤트 핸들러 연결하여 사용자 상호작용 개선
+- **아이콘 처리:** `SystemIcons.Application` 직접 할당으로 코드 간소화 및 안정성 향상
+- **검증 기능:** 개발 단계에서 앱 실행 여부를 쉽게 확인할 수 있는 메시지 박스 추가
+
+#### Current Status
+- ✅ UX 피드백 메시지 박스 구현 완료 (앱 실행 확인용)
+- ✅ 트레이 메뉴 이벤트 핸들러 구현 완료 (`Settings_Click`, `Exit_Click`)
+- ✅ 아이콘 할당 방식 개선 완료 (`SystemIcons.Application` 직접 할당)
+- ✅ ToolTipText 개선 완료 ("AI Mouse (Running)")
+- ✅ Phase 1.1의 모든 항목 완료 (프로젝트 세팅, DI 컨테이너, 트레이 아이콘, UX 피드백)
+- Phase 1.1 완전히 완료, 다음 단계: Phase 1.2 전역 입력 감지 (Global Input Hook) 구현 준비
+
+---
 
 ### 2026-02-05 (목) - Phase 1.1 DI 컨테이너 구성 및 시스템 트레이 아이콘 구현 (6차)
 **[목표]** `To_do.md`의 Phase 1.1 잔여 항목인 **의존성 주입(DI) 컨테이너 구성**과 **시스템 트레이 아이콘** 기능을 구현하여 앱이 백그라운드에서 실행되도록 완성.

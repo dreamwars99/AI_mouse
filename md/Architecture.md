@@ -175,6 +175,11 @@ var serviceProvider = services.BuildServiceProvider();
 var mainWindow = serviceProvider.GetRequiredService<MainWindow>();
 mainWindow.DataContext = serviceProvider.GetRequiredService<MainViewModel>();
 mainWindow.Hide(); // 초기 상태를 숨김으로 유지
+
+// TaskbarIcon 설정 및 검증 메시지
+_trayIcon = (TaskbarIcon)FindResource("TrayIcon");
+_trayIcon.Icon = SystemIcons.Application; // 빈 아이콘 방지
+MessageBox.Show("AI Mouse가 백그라운드에서 실행되었습니다.\n트레이 아이콘을 우클릭해보세요.", "실행 성공");
 ```
 
 **현재 상태:**
@@ -183,6 +188,7 @@ mainWindow.Hide(); // 초기 상태를 숨김으로 유지
 - ✅ `MainViewModel`과 `MainWindow` DI 등록 완료
 - ✅ `MainViewModel` 클래스 생성 완료 (`CommunityToolkit.Mvvm` 사용)
 - ✅ 시스템 트레이 아이콘 구현 완료 (`TaskbarIcon` 리소스)
+- ✅ UX 피드백 구현 완료 (`MessageBox` 검증 메시지, `Settings_Click`, `Exit_Click` 이벤트 핸들러)
 - ⏳ 서비스 인터페이스 등록은 Phase 1.2에서 진행 예정
 
 ---
@@ -433,4 +439,4 @@ protected override void OnExit(ExitEventArgs e)
 ---
 
 **Last Updated:** 2026-02-05  
-**Version:** 1.2 (Phase 1.1 완료 - DI 컨테이너 구성 및 트레이 아이콘 구현 완료)
+**Version:** 1.3 (Phase 1.1 완료 - UX 피드백 및 검증 기능 추가 완료)

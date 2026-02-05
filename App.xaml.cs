@@ -46,12 +46,18 @@ namespace AI_Mouse
             // 7. 리소스에서 TaskbarIcon을 찾아 _trayIcon 멤버 변수에 할당
             _trayIcon = (TaskbarIcon)FindResource("TrayIcon");
             
-            // 아이콘 파일이 없으므로 System.Drawing.SystemIcons.Application을 사용
-            // Icon.FromHandle을 사용하여 안전하게 할당
+            // 빈 아이콘 에러 방지를 위해 System.Drawing.SystemIcons.Application 할당
             if (_trayIcon != null)
             {
-                _trayIcon.Icon = Icon.FromHandle(SystemIcons.Application.Handle);
+                _trayIcon.Icon = SystemIcons.Application;
             }
+
+            // 검증: 앱 실행 확인용 메시지 박스 출력
+            MessageBox.Show(
+                "AI Mouse가 백그라운드에서 실행되었습니다.\n트레이 아이콘을 우클릭해보세요.", 
+                "실행 성공", 
+                MessageBoxButton.OK, 
+                MessageBoxImage.Information);
         }
 
         /// <summary>
@@ -69,9 +75,21 @@ namespace AI_Mouse
         }
 
         /// <summary>
+        /// 트레이 메뉴의 '설정' 항목 클릭 이벤트 핸들러
+        /// </summary>
+        private void Settings_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show(
+                "설정 창은 추후 구현될 예정입니다. (Phase 4.2)", 
+                "알림", 
+                MessageBoxButton.OK, 
+                MessageBoxImage.Information);
+        }
+
+        /// <summary>
         /// 트레이 메뉴의 '종료' 항목 클릭 이벤트 핸들러
         /// </summary>
-        private void ExitMenuItem_Click(object sender, RoutedEventArgs e)
+        private void Exit_Click(object sender, RoutedEventArgs e)
         {
             Application.Current.Shutdown();
         }
