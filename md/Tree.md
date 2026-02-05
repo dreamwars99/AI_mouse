@@ -10,30 +10,40 @@
 
 ```text
 AI_Mouse/
-├── App.xaml.cs                    # [Entry] DI 컨테이너 구성 및 앱 시작점
+├── App.xaml.cs                    # [Entry] 앱 시작점 (DI 컨테이너 구성 예정)
 ├── App.xaml                       # 애플리케이션 리소스 정의
-├── App.config                     # 애플리케이션 설정
-├── app.manifest                   # DPI Awareness 및 권한 설정
-├── AI_Mouse.csproj                # 프로젝트 파일
+├── AI_Mouse.csproj                # 프로젝트 파일 (.NET 8 WPF)
 ├── AI_Mouse.sln                   # 솔루션 파일
 │
-├── Views/                         # [UI] XAML 및 Code-behind
-│   ├── MainWindow.xaml           # 메인 윈도우 (초기엔 Hidden)
-│   ├── MainWindow.xaml.cs        # MainWindow Code-behind
-│   ├── OverlayWindow.xaml        # [Phase 1.3] 화면 캡처 오버레이
-│   ├── OverlayWindow.xaml.cs     # OverlayWindow Code-behind
-│   ├── SettingsWindow.xaml        # [Phase 4.2] 설정 창
-│   ├── SettingsWindow.xaml.cs    # SettingsWindow Code-behind
-│   └── ResultWindow.xaml         # [Phase 4.1] AI 응답 표시 창
-│   └── ResultWindow.xaml.cs      # ResultWindow Code-behind
+├── Views/                         # [UI] XAML 및 Code-behind ✅ 생성됨
+│   ├── MainWindow.xaml           # 메인 윈도우 (초기엔 Hidden 예정)
+│   └── MainWindow.xaml.cs        # MainWindow Code-behind
+│   │
+│   └── [Phase 1.3 예정]
+│       ├── OverlayWindow.xaml        # 화면 캡처 오버레이
+│       └── OverlayWindow.xaml.cs     # OverlayWindow Code-behind
+│   │
+│   └── [Phase 4.1 예정]
+│       ├── ResultWindow.xaml         # AI 응답 표시 창
+│       └── ResultWindow.xaml.cs      # ResultWindow Code-behind
+│   │
+│   └── [Phase 4.2 예정]
+│       ├── SettingsWindow.xaml       # 설정 창
+│       └── SettingsWindow.xaml.cs   # SettingsWindow Code-behind
 │
-├── ViewModels/                    # [Logic] View와 데이터 바인딩
-│   ├── MainViewModel.cs           # 메인 로직 및 커맨드 처리
-│   ├── OverlayViewModel.cs       # [Phase 1.3] 오버레이 상태 관리
-│   ├── SettingsViewModel.cs      # [Phase 4.2] 설정 화면 로직
-│   └── ResultViewModel.cs        # [Phase 4.1] 결과 표시 로직
+├── ViewModels/                    # [Logic] View와 데이터 바인딩 ✅ 생성됨
+│   ├── MainViewModel.cs           # 메인 로직 및 커맨드 처리 ✅ 생성됨
+│   │
+│   └── [Phase 1.3 예정]
+│       └── OverlayViewModel.cs       # 오버레이 상태 관리
+│   │
+│   └── [Phase 4.1 예정]
+│       └── ResultViewModel.cs        # 결과 표시 로직
+│   │
+│   └── [Phase 4.2 예정]
+│       └── SettingsViewModel.cs      # 설정 화면 로직
 │
-├── Services/                      # [Core] 비즈니스 로직 및 시스템 제어
+├── Services/                      # [Core] 비즈니스 로직 및 시스템 제어 ⏳ 생성 예정
 │   ├── Interfaces/                # 서비스 인터페이스
 │   │   ├── IGlobalHookService.cs          # [Phase 1.2] 전역 입력 감지
 │   │   ├── IScreenCaptureService.cs       # [Phase 2.1] 화면 캡처
@@ -48,35 +58,31 @@ AI_Mouse/
 │       ├── GeminiService.cs               # [Phase 3.1] API 클라이언트 구현
 │       └── TrayService.cs                 # 트레이 아이콘 구현
 │
-├── Models/                        # [Data] 데이터 구조 (DTO)
+├── Models/                        # [Data] 데이터 구조 (DTO) ⏳ 생성 예정
 │   ├── AppState.cs                # 앱 상태 (Idle/Listening/Processing/Result)
 │   ├── CaptureData.cs            # [Phase 2.1] 캡처 데이터 모델
 │   ├── AudioData.cs               # [Phase 2.2] 오디오 데이터 모델
 │   └── ApiResponse.cs             # [Phase 3.1] API 응답 모델
 │
-├── Helpers/                       # [Util] Win32 Interop, 컨버터 등
+├── Helpers/                       # [Util] Win32 Interop, 컨버터 등 ⏳ 생성 예정
 │   ├── NativeMethods.cs           # [Phase 1.2] Win32 P/Invoke 선언
 │   ├── DpiHelper.cs               # [Phase 2.1] DPI 좌표 변환 유틸리티
 │   └── Converters/                # WPF Value Converter
 │       └── (필요 시 추가)
 │
-├── Resources/                     # 리소스 파일
+├── Resources/                     # 리소스 파일 ⏳ 생성 예정
 │   ├── Icons/                     # 아이콘 파일 (.ico)
 │   └── Images/                    # 이미지 파일
 │
-├── Properties/                    # 프로젝트 속성
-│   ├── AssemblyInfo.cs
-│   ├── Resources.resx
-│   └── Settings.settings
-│
-└── md/                            # 프로젝트 문서화
+└── md/                            # 프로젝트 문서화 ✅ 생성됨
     ├── Architecture.md            # 시스템 아키텍처 설계
     ├── CURSOR_GUIDELINES.md       # AI 코딩 가이드라인
     ├── Dev_Roadmap.md             # 개발 로드맵
     ├── Tree.md                    # (본 문서) 프로젝트 구조도
     ├── work_process.md            # 작업 프로세스 정의
     ├── To_do.md                   # 할 일 목록
-    └── proposal.md                # 기획서
+    ├── proposal.md                # 기획서
+    └── error_log.md               # 에러 로그
 ```
 
 ---
@@ -141,12 +147,12 @@ graph TB
     GeminiService -->|생성| ApiResponse
 ```
 
-### 2.2. App.xaml.cs 구조 (DI 컨테이너)
+### 2.2. App.xaml.cs 구조 (DI 컨테이너) ⏳ 구현 예정
 
 ```text
 App.xaml.cs (Bootstrapper)
 │
-├── OnStartup()
+├── OnStartup() ⏳ 구현 예정
 │   ├── ServiceCollection 생성
 │   ├── Services 등록:
 │   │   ├── Singleton: IGlobalHookService → GlobalHookService
@@ -165,7 +171,7 @@ App.xaml.cs (Bootstrapper)
 │   ├── MainWindow.Visibility = Hidden
 │   └── TaskbarIcon 표시
 │
-└── OnExit()
+└── OnExit() ⏳ 구현 예정
     └── ServiceProvider.Dispose() (리소스 정리)
 ```
 
@@ -373,4 +379,4 @@ graph LR
 ---
 
 **Last Updated:** 2026-02-05  
-**Version:** 1.0 (Phase 1.1 기준)
+**Version:** 1.1 (Phase 1.1 진행 중 - 폴더 구조 및 기본 파일 생성 완료)

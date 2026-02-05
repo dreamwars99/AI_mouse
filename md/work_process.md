@@ -67,6 +67,60 @@ AI_Mouse/
 
 ## 📅 4. Development Log (개발 기록)
 
+### 2026-02-05 (목) - 프로젝트 문서 동기화 및 상태 업데이트 (5차)
+**[목표]** 현재 `AI_Mouse` 프로젝트의 실제 구현 상태(WPF .NET 8, MVVM 패턴, 생성된 폴더 구조)를 분석하여, 문서 파일 3종(`Tree.md`, `Architecture.md`, `To_do.md`)을 최신 상태로 동기화.
+
+#### Dev Action (Documentation Sync)
+- **프로젝트 상태 분석:**
+  - WPF .NET 8 프로젝트 구조 확인
+  - 생성된 폴더 구조 파악 (`Views/`, `ViewModels/` 생성 완료)
+  - 설치된 NuGet 패키지 확인:
+    - `CommunityToolkit.Mvvm` v8.2.2
+    - `Microsoft.Extensions.DependencyInjection` v8.0.0
+    - `Hardcodet.NotifyIcon.Wpf` v1.1.0
+  - 실제 파일 구조 확인 (`MainWindow.xaml`, `MainViewModel.cs` 등)
+
+- **Tree.md 최신화:**
+  - 실제 파일 시스템 구조 반영
+  - 생성된 폴더/파일은 ✅ 표시, 예정된 항목은 ⏳ 표시
+  - MVVM 계층 구조 다이어그램 유지 (WPF 구조에 맞게 이미 작성됨)
+  - `App.xaml.cs` DI 컨테이너 구조 섹션에 "구현 예정" 표시 추가
+
+- **Architecture.md 최신화:**
+  - WPF MVVM 구조 유지 (이미 올바르게 작성됨)
+  - DI 컨테이너 섹션에 현재 상태 추가:
+    - 패키지 설치 완료 표시
+    - `App.xaml.cs` 구현은 예정으로 표시
+  - 시퀀스 다이어그램 유지 (WPF MVVM 구조에 맞게 이미 작성됨)
+
+- **To_do.md 최신화:**
+  - Phase 1.1 완료 항목 체크:
+    - ✅ 프로젝트 생성 및 환경 설정 완료
+    - ✅ NuGet 패키지 설치 완료 (버전 정보 포함)
+    - ✅ 기본 폴더 구조 구축 완료 (`Views/`, `ViewModels/`)
+    - ✅ `MainViewModel` 클래스 생성 완료
+  - 다음 단계 명시:
+    - DI 컨테이너 구성 (`App.xaml.cs`)
+    - 트레이 아이콘 구현
+  - 완료된 작업 섹션에 Phase 1.1 진행 상황 추가
+
+#### Tech Details
+- **문서 동기화 전략:** 실제 프로젝트 상태를 정확히 반영하여 개발자가 프로젝트 구조를 한눈에 파악할 수 있도록 명확하게 작성
+- **상태 표시 규칙:** 
+  - ✅ 생성 완료
+  - ⏳ 생성 예정 (Phase별로 구분)
+- **문서 일관성:** 모든 문서가 동일한 프로젝트 상태를 반영하도록 동기화
+
+#### Current Status
+- 프로젝트 문서 3종(`Tree.md`, `Architecture.md`, `To_do.md`)이 현재 실제 구현 상태를 정확히 반영하도록 업데이트 완료
+- Phase 1.1 진행 상황이 명확하게 문서화됨:
+  - 완료: 프로젝트 생성, 패키지 설치, 기본 폴더 구조, `MainViewModel` 생성
+  - 다음 단계: DI 컨테이너 구성 및 트레이 아이콘 구현
+- Unity 관련 레거시 내용 없음 확인 (이미 WPF 구조로 작성됨)
+- 다음 단계: Phase 1.1의 남은 작업 진행 (DI 컨테이너 구성, 트레이 아이콘 구현)
+
+---
+
 ### 2026-02-05 (목) - NuGet 패키지 설치 및 MainWindow 위치 조정 (4차)
 **[목표]** 필수 NuGet 패키지를 설치하고, `MainWindow`를 `Views` 폴더로 이동하여 MVVM 패턴에 맞는 기본 구조를 완성.
 

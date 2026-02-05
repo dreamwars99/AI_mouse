@@ -160,9 +160,9 @@ graph TB
     GeminiService -->|생성| ApiResponse
 ```
 
-### 2.2. 의존성 주입 구조 (DI Container)
+### 2.2. 의존성 주입 구조 (DI Container) ⏳ 구현 예정
 
-**App.xaml.cs**에서 `ServiceCollection`을 구성합니다:
+**App.xaml.cs**에서 `ServiceCollection`을 구성합니다 (현재는 기본 상태, Phase 1.1에서 구현 예정):
 
 ```csharp
 // Singleton 서비스 (앱 생명주기 동안 단일 인스턴스)
@@ -181,6 +181,11 @@ services.AddTransient<MainWindow>();
 services.AddTransient<OverlayWindow>();
 services.AddTransient<ResultWindow>();
 ```
+
+**현재 상태:**
+- ✅ `Microsoft.Extensions.DependencyInjection` 패키지 설치 완료
+- ⏳ `App.xaml.cs`에서 `ServiceCollection` 구성 예정
+- ✅ `MainViewModel` 클래스 생성 완료 (`CommunityToolkit.Mvvm` 사용)
 
 ---
 
@@ -430,4 +435,4 @@ protected override void OnExit(ExitEventArgs e)
 ---
 
 **Last Updated:** 2026-02-05  
-**Version:** 1.0 (Phase 1.1 기준)
+**Version:** 1.1 (Phase 1.1 진행 중 - 기본 구조 생성 완료)
