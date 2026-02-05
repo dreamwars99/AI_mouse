@@ -9,6 +9,7 @@ using System.Drawing;
 using AI_Mouse.Services.Interfaces;
 using AI_Mouse.Services.Implementations;
 using System.Net.Http;
+using System;
 
 namespace AI_Mouse
 {
@@ -20,6 +21,7 @@ namespace AI_Mouse
         private TaskbarIcon? _trayIcon;
         private ServiceProvider? _serviceProvider;
         private OverlayWindow? _overlayWindow;
+        private SettingsWindow? _settingsWindow; // 중복 실행 방지용
 
         /// <summary>
         /// ServiceProvider를 외부에서 접근할 수 있도록 제공합니다.
@@ -48,22 +50,26 @@ namespace AI_Mouse
             services.AddTransient<ResultViewModel>();
             services.AddTransient<ResultWindow>();
 
-            // 5. GlobalHookService를 싱글톤으로 등록
+            // 5. SettingsViewModel과 SettingsWindow를 AddTransient로 등록
+            services.AddTransient<SettingsViewModel>();
+            services.AddTransient<SettingsWindow>();
+
+            // 6. GlobalHookService를 싱글톤으로 등록
             services.AddSingleton<IGlobalHookService, GlobalHookService>();
 
-            // 6. ScreenCaptureService를 싱글톤으로 등록
+            // 7. ScreenCaptureService를 싱글톤으로 등록
             services.AddSingleton<IScreenCaptureService, ScreenCaptureService>();
 
-            // 7. AudioRecorderService를 싱글톤으로 등록
+            // 8. AudioRecorderService를 싱글톤으로 등록
             services.AddSingleton<IAudioRecorderService, AudioRecorderService>();
 
-            // 8. HttpClient를 싱글톤으로 등록
+            // 9. HttpClient를 싱글톤으로 등록
             services.AddSingleton<HttpClient>();
 
-            // 9. GeminiService를 싱글톤으로 등록 (HttpClient 주입)
+            // 10. GeminiService를 싱글톤으로 등록 (HttpClient 주입)
             services.AddSingleton<IGeminiService, GeminiService>();
 
-            // 10. ServiceProvider 빌드
+            // 11. ServiceProvider 빌드
             _serviceProvider = services.BuildServiceProvider();
 
             // 11. MainWindow 인스턴스를 DI로 생성
@@ -94,8 +100,9 @@ namespace AI_Mouse
                 _trayIcon.Icon = SystemIcons.Application;
             }
 
-            // 18. GlobalHookService를 가져와서 훅 시작
+            // 18. GlobalHookService를 가져와서 기본 트리거 설정 및 훅 시작
             var hookService = _serviceProvider.GetRequiredService<IGlobalHookService>();
+            hookService.CurrentTrigger = Models.TriggerButton.XButton1; // 기본값: XButton1 (뒤로 가기)
             hookService.Start();
 
             // 검증: 앱 실행 확인용 메시지 박스 출력
@@ -161,11 +168,51 @@ namespace AI_Mouse
         /// </summary>
         private void Settings_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show(
-                "설정 창은 추후 구현될 예정입니다. (Phase 4.2)", 
-                "알림", 
-                MessageBoxButton.OK, 
-                MessageBoxImage.Information);
+            if (_serviceProvider == null)
+            {
+                MessageBox.Show(
+                    "서비스 프로바이더가 초기화되지 않았습니다.",
+                    "오류",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                return;
+            }
+
+            try
+            {
+                // 이미 창이 열려있으면 활성화만 수행
+                if (_settingsWindow != null && _settingsWindow.IsVisible)
+                {
+                    _settingsWindow.Activate();
+                    _settingsWindow.Focus();
+                    return;
+                }
+
+                // SettingsWindow와 SettingsViewModel 생성 (DI)
+                _settingsWindow = _serviceProvider.GetRequiredService<SettingsWindow>();
+                var settingsViewModel = _serviceProvider.GetRequiredService<SettingsViewModel>();
+
+                // 창이 닫힐 때 참조 제거
+                _settingsWindow.Closed += (s, args) =>
+                {
+                    _settingsWindow = null;
+                };
+
+                // ViewModel 설정
+                _settingsWindow.SetViewModel(settingsViewModel);
+
+                // 창 표시
+                _settingsWindow.Show();
+                _settingsWindow.Activate();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"설정 창을 열 수 없습니다:\n\n{ex.Message}",
+                    "오류",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
         }
 
         /// <summary>

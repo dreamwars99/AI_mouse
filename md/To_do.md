@@ -2,7 +2,7 @@
 
 ## 📋 현재 상태 요약 (Current Status Summary)
 
-**프로젝트 상태:** Phase 4.1 완료 ✅ (ResultWindow 및 Markdig.Wpf 마크다운 렌더링 구현 완료) + 보안 개선 (API Key 외부 파일 분리)
+**프로젝트 상태:** Phase 4.2 완료 ✅ (SettingsWindow 구현 및 트리거 버튼 동적 변경 완료)
 
 **완료된 주요 기능:**
 - ✅ 프로젝트 생성 및 환경 설정 (.NET 8 WPF)
@@ -287,13 +287,20 @@
   - [x] `App.xaml.cs`에 DI 등록 완료 ✅
   - [x] `MainViewModel`에서 MessageBox 대신 ResultWindow 사용하도록 변경 완료 ✅
 
-#### Phase 4.2: 사용자 설정 (Settings)
-- [ ] **SettingsWindow 구현**
-  - [ ] `Views/SettingsWindow.xaml` 생성
-  - [ ] 입력 디바이스 선택 (마이크)
-  - [ ] API Key 입력 필드
-  - [ ] 시작 프로그램 등록 옵션
-  - [ ] 트레이 아이콘 ContextMenu에서 '설정' 클릭 시 열기
+#### Phase 4.2: 사용자 설정 (Settings) ✅ 완료
+- [x] **SettingsWindow 구현** ✅
+  - [x] `Models/Enums.cs` 생성 (`TriggerButton` Enum 정의) ✅
+  - [x] `IGlobalHookService`에 `CurrentTrigger` 속성 추가 ✅
+  - [x] `GlobalHookService` 트리거 동적 변경 로직 구현 ✅
+  - [x] `ViewModels/SettingsViewModel.cs` 생성 ✅
+  - [x] `Views/SettingsWindow.xaml` 생성 ✅
+  - [x] `Views/SettingsWindow.xaml.cs` 생성 ✅
+  - [x] API Key 입력 필드 (PasswordBox) ✅
+  - [x] 트리거 버튼 선택 (ComboBox) ✅
+  - [x] 임시 파일 폴더 열기 버튼 ✅
+  - [x] 트레이 아이콘 ContextMenu에서 '설정' 클릭 시 열기 ✅
+  - [x] 중복 실행 방지 로직 구현 ✅
+  - [x] 저장 후 자동 창 닫기 기능 ✅
 
 #### Phase 4.3: 안정화 및 배포 (Stabilization)
 - [ ] **메모리 누수 점검**
@@ -336,4 +343,4 @@
 
 ---
 
-**마지막 업데이트**: 2026-02-05 (Gemini 모델 ID 변경 및 URL 동적 생성 로직 개선 완료)
+**마지막 업데이트**: 2026-02-05 (Phase 4.2 완료: SettingsWindow 구현 및 트리거 버튼 동적 변경 완료)

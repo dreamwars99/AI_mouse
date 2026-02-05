@@ -5,6 +5,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Media.Imaging;
 using AI_Mouse.Helpers;
+using AI_Mouse.Models;
 using AI_Mouse.Services.Interfaces;
 using AI_Mouse.Views;
 using Microsoft.Extensions.DependencyInjection;
@@ -74,8 +75,9 @@ namespace AI_Mouse.ViewModels
         /// </remarks>
         private void OnMouseAction(object? sender, MouseActionEventArgs e)
         {
-            // 트리거 버튼(XButton1)만 처리
-            if (e.Button != MouseButton.XButton1)
+            // 현재 트리거 버튼만 처리
+            var currentTriggerButton = ConvertTriggerToMouseButton(_hookService.CurrentTrigger);
+            if (e.Button != currentTriggerButton)
             {
                 return;
             }
@@ -337,6 +339,22 @@ namespace AI_Mouse.ViewModels
                 Debug.WriteLine($"[MainViewModel] API Key 로드 중 오류 발생: {ex.Message}");
                 return null;
             }
+        }
+
+        /// <summary>
+        /// TriggerButton을 MouseButton으로 변환합니다.
+        /// </summary>
+        private MouseButton ConvertTriggerToMouseButton(Models.TriggerButton trigger)
+        {
+            return trigger switch
+            {
+                Models.TriggerButton.Left => MouseButton.Left,
+                Models.TriggerButton.Right => MouseButton.Right,
+                Models.TriggerButton.Middle => MouseButton.Middle,
+                Models.TriggerButton.XButton1 => MouseButton.XButton1,
+                Models.TriggerButton.XButton2 => MouseButton.XButton2,
+                _ => MouseButton.None
+            };
         }
     }
 }

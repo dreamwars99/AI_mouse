@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
 using AI_Mouse.Helpers;
+using AI_Mouse.Models;
 using AI_Mouse.Services.Interfaces;
 
 namespace AI_Mouse.Services.Implementations
@@ -16,11 +17,26 @@ namespace AI_Mouse.Services.Implementations
         private IntPtr _hookId = IntPtr.Zero;
         private NativeMethods.LowLevelMouseProc _hookProc;
         private bool _disposed = false;
+        private TriggerButton _currentTrigger = TriggerButton.XButton1; // 기본값: XButton1
+        private bool _isDragging = false; // 드래그 중인지 추적
 
         /// <summary>
         /// 마우스 액션이 발생했을 때 발생하는 이벤트
         /// </summary>
         public event EventHandler<MouseActionEventArgs>? MouseAction;
+
+        /// <summary>
+        /// 현재 트리거 버튼 (설정에서 변경 가능)
+        /// </summary>
+        public TriggerButton CurrentTrigger
+        {
+            get => _currentTrigger;
+            set
+            {
+                _currentTrigger = value;
+                Debug.WriteLine($"[GlobalHookService] 트리거 버튼 변경: {value}");
+            }
+        }
 
         /// <summary>
         /// 훅이 활성화되어 있는지 여부
@@ -123,21 +139,117 @@ namespace AI_Mouse.Services.Implementations
                 return NativeMethods.CallNextHookEx(_hookId, nCode, wParam, lParam);
             }
 
-            // 마우스 메시지 처리 (비동기로 전파하여 콜백을 경량화)
-            Task.Run(() =>
+            var message = wParam.ToInt32();
+            var hookStruct = Marshal.PtrToStructure<NativeMethods.MSLLHOOKSTRUCT>(lParam);
+
+            // 현재 트리거 버튼에 해당하는 메시지인지 확인
+            bool isTriggerMessage = IsTriggerMessage(message, hookStruct.mouseData);
+
+            if (isTriggerMessage)
             {
-                try
+                // 트리거 버튼의 Down/Up 이벤트 처리
+                if (message == GetDownMessage(_currentTrigger) || message == GetUpMessage(_currentTrigger))
                 {
-                    ProcessMouseMessage(wParam, lParam);
+                    // 드래그 상태 업데이트
+                    if (message == GetDownMessage(_currentTrigger))
+                    {
+                        _isDragging = true;
+                    }
+                    else if (message == GetUpMessage(_currentTrigger))
+                    {
+                        _isDragging = false;
+                    }
+
+                    // 마우스 메시지 처리 (비동기로 전파하여 콜백을 경량화)
+                    Task.Run(() =>
+                    {
+                        try
+                        {
+                            ProcessMouseMessage(wParam, lParam);
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"[GlobalHookService] 마우스 메시지 처리 중 오류: {ex.Message}");
+                        }
+                    });
+
+                    // 기본 동작(예: 뒤로가기, 우클릭 메뉴)을 막기 위해 이벤트 전파 차단
+                    return (IntPtr)1;
                 }
-                catch (Exception ex)
+            }
+            else if (_isDragging && message == NativeMethods.MouseMessages.WM_MOUSEMOVE)
+            {
+                // 드래그 중 Move 이벤트는 처리하되 기본 동작은 허용
+                Task.Run(() =>
                 {
-                    Debug.WriteLine($"[GlobalHookService] 마우스 메시지 처리 중 오류: {ex.Message}");
-                }
-            });
+                    try
+                    {
+                        ProcessMouseMessage(wParam, lParam);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"[GlobalHookService] 마우스 메시지 처리 중 오류: {ex.Message}");
+                    }
+                });
+            }
 
             // 다음 훅으로 전달
             return NativeMethods.CallNextHookEx(_hookId, nCode, wParam, lParam);
+        }
+
+        /// <summary>
+        /// 현재 메시지가 트리거 버튼에 해당하는지 확인합니다.
+        /// </summary>
+        private bool IsTriggerMessage(int message, uint mouseData)
+        {
+            return _currentTrigger switch
+            {
+                TriggerButton.Left => message == NativeMethods.MouseMessages.WM_LBUTTONDOWN || 
+                                      message == NativeMethods.MouseMessages.WM_LBUTTONUP,
+                TriggerButton.Right => message == NativeMethods.MouseMessages.WM_RBUTTONDOWN || 
+                                       message == NativeMethods.MouseMessages.WM_RBUTTONUP,
+                TriggerButton.Middle => message == NativeMethods.MouseMessages.WM_MBUTTONDOWN || 
+                                        message == NativeMethods.MouseMessages.WM_MBUTTONUP,
+                TriggerButton.XButton1 => (message == NativeMethods.MouseMessages.WM_XBUTTONDOWN || 
+                                           message == NativeMethods.MouseMessages.WM_XBUTTONUP) && 
+                                          (mouseData >> 16) == 1,
+                TriggerButton.XButton2 => (message == NativeMethods.MouseMessages.WM_XBUTTONDOWN || 
+                                           message == NativeMethods.MouseMessages.WM_XBUTTONUP) && 
+                                          (mouseData >> 16) == 2,
+                _ => false
+            };
+        }
+
+        /// <summary>
+        /// 트리거 버튼에 해당하는 Down 메시지를 반환합니다.
+        /// </summary>
+        private int GetDownMessage(TriggerButton trigger)
+        {
+            return trigger switch
+            {
+                TriggerButton.Left => NativeMethods.MouseMessages.WM_LBUTTONDOWN,
+                TriggerButton.Right => NativeMethods.MouseMessages.WM_RBUTTONDOWN,
+                TriggerButton.Middle => NativeMethods.MouseMessages.WM_MBUTTONDOWN,
+                TriggerButton.XButton1 => NativeMethods.MouseMessages.WM_XBUTTONDOWN,
+                TriggerButton.XButton2 => NativeMethods.MouseMessages.WM_XBUTTONDOWN,
+                _ => 0
+            };
+        }
+
+        /// <summary>
+        /// 트리거 버튼에 해당하는 Up 메시지를 반환합니다.
+        /// </summary>
+        private int GetUpMessage(TriggerButton trigger)
+        {
+            return trigger switch
+            {
+                TriggerButton.Left => NativeMethods.MouseMessages.WM_LBUTTONUP,
+                TriggerButton.Right => NativeMethods.MouseMessages.WM_RBUTTONUP,
+                TriggerButton.Middle => NativeMethods.MouseMessages.WM_MBUTTONUP,
+                TriggerButton.XButton1 => NativeMethods.MouseMessages.WM_XBUTTONUP,
+                TriggerButton.XButton2 => NativeMethods.MouseMessages.WM_XBUTTONUP,
+                _ => 0
+            };
         }
 
         /// <summary>
@@ -157,6 +269,8 @@ namespace AI_Mouse.Services.Implementations
             {
                 case NativeMethods.MouseMessages.WM_MOUSEMOVE:
                     actionType = MouseActionType.Move;
+                    // Move 이벤트는 버튼 정보가 없으므로 현재 트리거 버튼 사용
+                    button = ConvertTriggerToMouseButton(_currentTrigger);
                     break;
 
                 case NativeMethods.MouseMessages.WM_LBUTTONDOWN:
@@ -215,6 +329,22 @@ namespace AI_Mouse.Services.Implementations
             Debug.WriteLine($"[GlobalHookService] 마우스 이벤트: {actionType}, 버튼: {button}, 좌표: ({hookStruct.pt.X}, {hookStruct.pt.Y})");
 
             MouseAction?.Invoke(this, args);
+        }
+
+        /// <summary>
+        /// TriggerButton을 MouseButton으로 변환합니다.
+        /// </summary>
+        private MouseButton ConvertTriggerToMouseButton(TriggerButton trigger)
+        {
+            return trigger switch
+            {
+                TriggerButton.Left => MouseButton.Left,
+                TriggerButton.Right => MouseButton.Right,
+                TriggerButton.Middle => MouseButton.Middle,
+                TriggerButton.XButton1 => MouseButton.XButton1,
+                TriggerButton.XButton2 => MouseButton.XButton2,
+                _ => MouseButton.None
+            };
         }
 
         /// <summary>

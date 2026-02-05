@@ -4,7 +4,7 @@
 - **Role:** Lead Architect & Cursor AI
 - **Framework:** .NET 8 (WPF)
 - **Platform:** Windows 10 / 11 Desktop
-- **Last Updated:** 2026-02-05 (ResultWindow 스크롤 포커스 문제 해결: PreviewMouseWheel 이벤트 터널링, 19차)
+- **Last Updated:** 2026-02-05 (Phase 4.2 완료: SettingsWindow 구현 및 트리거 버튼 동적 변경, 20차)
 
 ## 📌 1. Development Environment (개발 환경 상세)
 이 프로젝트를 이어받는 AI/개발자는 아래 설정을 필수로 확인해야 합니다.
@@ -86,7 +86,87 @@ AI_Mouse/
 - `ResultViewModel`: 결과 표시 로직 ✅
 
 
-****## 📅 4. Development Log (개발 기록)
+## 📅 4. Development Log (개발 기록)
+
+### 2026-02-05 (목) - Phase 4.2 완료: SettingsWindow 구현 및 트리거 버튼 동적 변경 (20차)
+**[목표]** **Phase 4.2**를 수행한다. API 키 설정뿐만 아니라 **트리거 버튼 변경**, **임시 폴더 열기** 기능을 포함한 **종합 설정 윈도우(SettingsWindow)**를 구현하고, `StackPanel.Spacing` 빌드 오류를 해결한다.
+
+#### Dev Action (SettingsWindow Implementation)
+- **Models/Enums.cs 생성:**
+  - `TriggerButton` 열거형 정의: `Left`, `Right`, `Middle`, `XButton1` (뒤로), `XButton2` (앞으로)
+  - 각 값에 대한 XML 문서 주석 추가
+
+- **IGlobalHookService 수정:**
+  - `TriggerButton CurrentTrigger { get; set; }` 속성 추가
+  - 트리거 버튼을 동적으로 변경할 수 있도록 인터페이스 확장
+
+- **GlobalHookService 수정:**
+  - `CurrentTrigger` 속성 구현 및 기본값 설정 (`XButton1`)
+  - `_isDragging` 필드 추가로 드래그 상태 추적
+  - `HookCallback` 메서드 수정:
+    - 하드코딩된 `WM_XBUTTONDOWN` 대신 `CurrentTrigger` 값에 따라 분기 처리
+    - `IsTriggerMessage()`, `GetDownMessage()`, `GetUpMessage()` 헬퍼 메서드 추가
+    - 트리거 버튼의 Down/Up 이벤트 감지 시 `return 1`로 기본 동작 차단 (뒤로가기, 우클릭 메뉴 등)
+    - 드래그 중 Move 이벤트는 처리하되 기본 동작은 허용
+  - `ConvertTriggerToMouseButton()` 메서드 추가로 TriggerButton을 MouseButton으로 변환
+
+- **SettingsViewModel 구현:**
+  - `ObservableObject` 상속
+  - `ApiKey` 속성: `apikey.txt` 파일 로드 및 저장 (공백 제거 `Trim()` 필수)
+  - `SelectedButton` 속성: `GlobalHookService.CurrentTrigger`와 연동, 변경 시 즉시 서비스에 반영 (`OnSelectedButtonChanged`)
+  - `SaveCommand`: API Key 저장 및 `SettingsSaved` 이벤트 발생
+  - `OpenFolderCommand`: `System.Diagnostics.Process.Start("explorer.exe", ...)`를 사용하여 `%TEMP%\AI_Mouse` 폴더 열기
+  - `LoadSettings()` 메서드: 앱 시작 시 기존 설정 로드
+
+- **SettingsWindow XAML 구현:**
+  - **빌드 오류 수정:** WPF `StackPanel`에는 `Spacing` 속성이 없으므로 제거하고 `Margin` 속성으로 간격 조정
+  - 디자인: `WindowStyle="None"`, `AllowsTransparency="True"`, 둥근 모서리와 그림자 효과
+  - API Key 입력란: `PasswordBox` 사용 (비밀번호 마스킹)
+  - 트리거 버튼 선택: `ComboBox`에 Enum 값 바인딩
+  - 좌클릭 경고: `LeftButtonWarning` TextBlock 추가, Left 선택 시 표시
+  - 임시 파일 폴더 열기 버튼: 아이콘 📂 추가
+  - 하단 버튼: [저장], [닫기] 버튼
+  - 타이틀 바 드래그: `MouseLeftButtonDown` 이벤트로 `DragMove()` 구현
+
+- **SettingsWindow Code-behind 구현:**
+  - `SetViewModel()` 메서드: ViewModel 설정 및 `SettingsSaved` 이벤트 구독 (저장 후 창 닫기)
+  - `ApiKeyPasswordBox_PasswordChanged`: PasswordBox 변경 시 ViewModel에 반영
+  - `TriggerButtonComboBox_SelectionChanged`: Left 선택 시 경고 메시지 표시
+  - ESC 키로 창 닫기 기능
+
+- **App.xaml.cs 수정:**
+  - `SettingsViewModel`과 `SettingsWindow` DI 등록 (Transient)
+  - 앱 시작 시 `GlobalHookService`에 기본 트리거 설정 (`XButton1`)
+  - `Settings_Click` 이벤트 핸들러 구현:
+    - `_settingsWindow` 필드 추가로 중복 실행 방지
+    - 이미 열려있으면 `Activate()`만 수행
+    - 창 닫힘 시 참조 제거 (`Closed` 이벤트)
+
+- **MainViewModel 수정:**
+  - 하드코딩된 `MouseButton.XButton1` 대신 `_hookService.CurrentTrigger` 사용
+  - `ConvertTriggerToMouseButton()` 메서드 추가로 TriggerButton을 MouseButton으로 변환
+
+#### Tech Details
+- **트리거 동적 변경:** `CurrentTrigger` 속성으로 런타임에 트리거 버튼 변경 가능
+- **기본 동작 차단:** 트리거 버튼의 Down/Up 이벤트 감지 시 `return 1`로 이벤트 전파 차단
+- **중복 실행 방지:** `_settingsWindow` 필드로 이미 열려있는 창 추적
+- **자동 창 닫기:** `SettingsSaved` 이벤트로 저장 완료 후 창 자동 닫기
+- **WPF 호환성:** `Spacing` 속성 제거, `Margin`으로 간격 조정
+- **사용자 경고:** 좌클릭 선택 시 경고 메시지 표시
+
+#### Current Status
+- ✅ `Models/Enums.cs` 생성 완료 (`TriggerButton` Enum 정의)
+- ✅ `IGlobalHookService`에 `CurrentTrigger` 속성 추가 완료
+- ✅ `GlobalHookService` 트리거 동적 변경 로직 구현 완료
+- ✅ `SettingsViewModel` 구현 완료 (API Key, 트리거 버튼, 폴더 열기)
+- ✅ `SettingsWindow.xaml` 구현 완료 (`Spacing` 제거, `Margin`으로 대체)
+- ✅ `SettingsWindow.xaml.cs` 구현 완료 (이벤트 핸들러, 창 닫기)
+- ✅ `App.xaml.cs` 수정 완료 (DI 등록, 중복 실행 방지, 기본 트리거 설정)
+- ✅ `MainViewModel` 수정 완료 (`CurrentTrigger` 사용)
+- ✅ Linter 에러 없음 확인 완료
+- Phase 4.2 완료, 종합 설정 윈도우 구현 완료
+
+---
 
 ### 2026-02-05 (목) - ResultWindow 스크롤 포커스 문제 해결: PreviewMouseWheel 이벤트 터널링 (19차)
 **[목표]** **ResultWindow**의 스크롤이 마우스 오버 시 즉시 작동하도록 이벤트 터널링을 구현하고, `Topmost` 옵션을 확실하게 해제하여 사용자 경험을 개선.

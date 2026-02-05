@@ -26,9 +26,8 @@ AI_Mouse/
 │   ├── ResultWindow.xaml                # [Phase 4.1] AI 응답 표시 창 ✅ 생성됨 (드래그 이동, 스크롤 UX 개선, 최소화 버튼, 포커스 관리, PreviewMouseWheel 완료, 17-19차)
 │   └── ResultWindow.xaml.cs             # [Phase 4.1] ResultWindow Code-behind ✅ 생성됨 (DragMove, 최소화, 포커스 관리, PreviewMouseWheel 구현 완료, 17-19차)
 │   │
-│   └── [Phase 4.2 예정]
-│       ├── SettingsWindow.xaml       # 설정 창
-│       └── SettingsWindow.xaml.cs   # SettingsWindow Code-behind
+│   ├── SettingsWindow.xaml                # [Phase 4.2] 설정 창 ✅ 생성됨
+│   └── SettingsWindow.xaml.cs            # [Phase 4.2] SettingsWindow Code-behind ✅ 생성됨
 │
 ├── ViewModels/                    # [Logic] View와 데이터 바인딩 ✅ 생성됨
 │   ├── MainViewModel.cs           # 메인 로직 및 커맨드 처리 ✅ 생성됨
@@ -37,8 +36,7 @@ AI_Mouse/
 │   │
 │   ├── ResultViewModel.cs               # [Phase 4.1] 결과 표시 로직 ✅ 생성됨
 │   │
-│   └── [Phase 4.2 예정]
-│       └── SettingsViewModel.cs      # 설정 화면 로직
+│   └── SettingsViewModel.cs              # [Phase 4.2] 설정 화면 로직 ✅ 생성됨
 │
 ├── Services/                      # [Core] 비즈니스 로직 및 시스템 제어 ✅ 생성됨
 │   ├── Interfaces/                # 서비스 인터페이스 ✅ 생성됨
@@ -55,7 +53,8 @@ AI_Mouse/
 │       ├── GeminiService.cs               # [Phase 3.1] HttpClient API 클라이언트 구현 ✅ 생성됨
 │       └── TrayService.cs                 # 트레이 아이콘 구현 ⏳ 생성 예정
 │
-├── Models/                        # [Data] 데이터 구조 (DTO) ⏳ 생성 예정
+├── Models/                        # [Data] 데이터 구조 (DTO) ✅ 생성됨
+│   ├── Enums.cs                   # [Phase 4.2] TriggerButton 열거형 ✅ 생성됨
 │   ├── AppState.cs                # 앱 상태 (Idle/Listening/Processing/Result)
 │   ├── CaptureData.cs            # [Phase 2.1] 캡처 데이터 모델
 │   ├── AudioData.cs               # [Phase 2.2] 오디오 데이터 모델
@@ -158,6 +157,8 @@ App.xaml.cs (Bootstrapper)
 │   │   ├── Transient: OverlayWindow ✅ (Phase 1.3)
 │   │   ├── Transient: ResultViewModel ✅ (Phase 4.1)
 │   │   ├── Transient: ResultWindow ✅ (Phase 4.1)
+│   │   ├── Transient: SettingsViewModel ✅ (Phase 4.2)
+│   │   ├── Transient: SettingsWindow ✅ (Phase 4.2)
 │   │   ├── Singleton: IGlobalHookService → GlobalHookService ✅
 │   │   ├── Singleton: IScreenCaptureService → ScreenCaptureService ✅ (Phase 2.1)
 │   │   ├── Singleton: IAudioRecorderService → AudioRecorderService ✅ (Phase 2.2)
@@ -270,7 +271,7 @@ namespace AI_Mouse.Views
     public partial class MainWindow : Window { }
     public partial class OverlayWindow : Window { }
     public partial class ResultWindow : Window { }
-    public partial class SettingsWindow : Window { }
+    public partial class SettingsWindow : Window { } // ✅ Phase 4.2 완료
 }
 
 namespace AI_Mouse.ViewModels
@@ -278,7 +279,7 @@ namespace AI_Mouse.ViewModels
     public partial class MainViewModel : ObservableObject { }
     public partial class OverlayViewModel : ObservableObject { }
     public partial class ResultViewModel : ObservableObject { }
-    public partial class SettingsViewModel : ObservableObject { }
+    public partial class SettingsViewModel : ObservableObject { } // ✅ Phase 4.2 완료
 }
 
 namespace AI_Mouse.Services.Interfaces
@@ -301,6 +302,7 @@ namespace AI_Mouse.Services.Implementations
 
 namespace AI_Mouse.Models
 {
+    public enum TriggerButton { Left, Right, Middle, XButton1, XButton2 } // ✅ Phase 4.2 완료
     public enum AppState { Idle, Listening, Processing, Result }
     public class CaptureData { }
     public class AudioData { }
@@ -403,4 +405,4 @@ graph LR
 ---
 
 **Last Updated:** 2026-02-05  
-**Version:** 2.5 (ResultWindow 스크롤 포커스 문제 해결: PreviewMouseWheel 이벤트 터널링)
+**Version:** 2.6 (Phase 4.2 완료: SettingsWindow 구현 및 트리거 버튼 동적 변경)
