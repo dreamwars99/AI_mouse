@@ -4,7 +4,7 @@
 - **Role:** Lead Architect & Cursor AI
 - **Framework:** .NET 8 (WPF)
 - **Platform:** Windows 10 / 11 Desktop
-- **Last Updated:** 2026-02-05 (프로젝트 문서화 및 설정 파일 정리 완료)
+- **Last Updated:** 2026-02-05 (프로젝트 폴더 구조 생성 완료)
 
 ## 📌 1. Development Environment (개발 환경 상세)
 이 프로젝트를 이어받는 AI/개발자는 아래 설정을 필수로 확인해야 합니다.
@@ -66,6 +66,32 @@ AI_Mouse/
 - `AudioRecorderService`: NAudio 기반 음성 녹음.
 
 ## 📅 4. Development Log (개발 기록)
+
+### 2026-02-05 (목) - 프로젝트 폴더 구조 생성 (3차)
+**[목표]** MVVM 패턴에 따른 프로젝트 폴더 구조를 생성하여 코드 조직화의 기반을 마련.
+
+#### Dev Action (Directory Structure Setup)
+- **폴더 구조 생성:**
+  - 프로젝트 루트에 MVVM 패턴에 맞는 폴더 구조 생성
+  - `Views/`: UI 레이어 (XAML 및 Code-behind 파일)
+  - `ViewModels/`: 비즈니스 로직 및 데이터 바인딩
+  - `Services/`: 비즈니스 로직 및 시스템 제어
+    - `Services/Interfaces/`: 서비스 인터페이스 정의
+    - `Services/Implementations/`: 서비스 구현체
+  - `Models/`: 데이터 구조 및 DTO
+  - `Helpers/`: 유틸리티 클래스 (Win32 Interop, 컨버터 등)
+
+#### Tech Details
+- **구조 설계 원칙:** 관심사 분리(Separation of Concerns) 및 MVVM 패턴 준수
+- **확장성 고려:** 서비스 계층을 Interfaces와 Implementations로 분리하여 의존성 주입 및 테스트 용이성 확보
+- **표준 구조:** WPF .NET 8 프로젝트의 표준 폴더 구조 적용
+
+#### Current Status
+- 프로젝트 루트에 모든 필수 폴더 구조 생성 완료
+- MVVM 아키텍처에 맞는 코드 조직화 준비 완료
+- 다음 단계: 프로젝트 파일 생성 및 기본 클래스 구현 준비
+
+---
 
 ### 2026-02-05 (목) - 프로젝트 문서화 및 설정 파일 정리 (2차)
 **[목표]** 기존 Unity 프로젝트 템플릿에서 남아있던 문서와 설정 파일을 AI Mouse WPF 프로젝트에 맞게 전면 수정.
