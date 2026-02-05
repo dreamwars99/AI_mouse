@@ -4,7 +4,7 @@
 - **Role:** Lead Architect & Cursor AI
 - **Framework:** .NET 8 (WPF)
 - **Platform:** Windows 10 / 11 Desktop
-- **Last Updated:** 2026-02-05 (Phase 3.1 Gemini API 연동 완료 - HttpClient 기반 Gemini 1.5 Pro API 통신 서비스 구현)
+- **Last Updated:** 2026-02-05 (Phase 4.1 결과 뷰어 완료 - ResultWindow 및 Markdig.Wpf 마크다운 렌더링 구현)
 
 ## 📌 1. Development Environment (개발 환경 상세)
 이 프로젝트를 이어받는 AI/개발자는 아래 설정을 필수로 확인해야 합니다.
@@ -27,6 +27,9 @@
 - **HttpClient** ✅ (Phase 3.1 완료)
   - Purpose: Gemini API HTTP 통신 (System.Net.Http)
   - Built-in (.NET Framework)
+- **Markdig.Wpf** ✅ (Phase 4.1 완료)
+  - Purpose: 마크다운 텍스트를 WPF에서 렌더링
+  - Version: 0.5.0.1
 
 ### 1.2. Project Settings
 - **Target OS:** Windows 10.0.19041.0 이상
@@ -71,8 +74,113 @@ AI_Mouse/
 - `AudioRecorderService`: NAudio 기반 음성 녹음 ✅
 - `GeminiService`: HttpClient 기반 Gemini 1.5 Pro API 통신 ✅
 
+**Views (Implemented)**
+- `MainWindow`: 메인 윈도우 (초기엔 Hidden) ✅
+- `OverlayWindow`: 화면 캡처 오버레이 ✅
+- `ResultWindow`: AI 응답 표시 창 (마크다운 렌더링) ✅
 
-## 📅 4. Development Log (개발 기록)
+**ViewModels (Implemented)**
+- `MainViewModel`: 메인 로직 및 상태 관리 ✅
+- `OverlayViewModel`: 오버레이 상태 관리 ✅
+- `ResultViewModel`: 결과 표시 로직 ✅
+
+
+****## 📅 4. Development Log (개발 기록)
+
+### 2026-02-05 (목) - Phase 4.1 결과 뷰어 완료: ResultWindow 및 Markdig.Wpf 마크다운 렌더링 구현 (14차)
+**[목표]** `MessageBox` 대신 **AI의 응답을 보여줄 전용 윈도우(ResultWindow)**를 구현하고, **`Markdig.Wpf`** 라이브러리를 사용하여 마크다운 텍스트를 렌더링하는 기능을 완성.
+
+#### Dev Action (Result Window Implementation)
+- **AI_Mouse.csproj 수정:**
+  - `Markdig.Wpf` NuGet 패키지 추가 (v0.5.0.1)
+  - 마크다운 텍스트를 WPF에서 렌더링하기 위한 필수 패키지
+
+- **ViewModels/ResultViewModel.cs 생성:**
+  - `ResultViewModel` 클래스 생성 (`ObservableObject` 상속)
+  - `[ObservableProperty] string _responseText;` (AI 답변 바인딩용)
+  - `[ObservableProperty] bool _isLoading;` (로딩 상태 표시용)
+  - `LoadingVisibility`, `ContentVisibility` 속성 구현 (UI 표시 제어)
+  - `OnIsLoadingChanged` 부분 메서드로 Visibility 속성 자동 업데이트
+  - `[RelayCommand] void Close();` (창 닫기 명령)
+
+- **Views/ResultWindow.xaml 생성:**
+  - Window 속성 설정:
+    - `WindowStyle="None"` (테두리 없는 창)
+    - `ResizeMode="CanResizeWithGrip"` (우측 하단 그립으로 크기 조절)
+    - `Topmost="True"` (항상 최상단 표시)
+    - `SizeToContent="Height"` (높이는 콘텐츠에 맞춤)
+    - `Width="400"`, `MaxHeight="600"` (고정 너비, 최대 높이 제한)
+  - UI 구성:
+    - 상단: 타이틀 바 ("AI Mouse") + 닫기 버튼 (X)
+    - 중앙: `ScrollViewer` 안에 `markdown:MarkdownViewer` 배치
+      - 네임스페이스: `xmlns:markdown="clr-namespace:Markdig.Wpf;assembly=Markdig.Wpf"`
+      - Markdown 바인딩: `Markdown="{Binding ResponseText}"`
+  - 스타일: 배경 흰색, 둥근 모서리(`Border.CornerRadius="8"`), 그림자 효과(`DropShadowEffect`)
+  - 로딩 인디케이터: `ProgressBar` (IsIndeterminate) 및 텍스트 표시
+
+- **Views/ResultWindow.xaml.cs 생성:**
+  - ESC 키로 창 닫기 (`KeyDown` 이벤트)
+  - `SetViewModel(ResultViewModel)` 메서드 구현 (DI 주입)
+  - `CloseButton_Click` 이벤트 핸들러 구현
+  - `OnSourceInitialized` 오버라이드:
+    - 마우스 커서 위치 가져오기 (`NativeMethods.GetCursorPos`)
+    - 창 위치 계산 (마우스 커서 근처 또는 우측 하단)
+    - 화면 밖으로 나가지 않도록 조정
+
+- **Helpers/NativeMethods.cs 수정:**
+  - `GetCursorPos` Win32 API 선언 추가
+    - 현재 마우스 커서의 화면 좌표를 가져오는 함수
+    - `[DllImport("user32.dll")]` 사용
+
+- **App.xaml.cs 수정:**
+  - `ResultViewModel`과 `ResultWindow`를 Transient로 등록
+    - 질문할 때마다 새 창을 띄우기 위함
+  - `App.Services` 정적 속성 추가:
+    - `public static IServiceProvider? Services => ((App)Current)._serviceProvider;`
+    - 외부에서 ServiceProvider 접근 가능하도록 함
+
+- **ViewModels/MainViewModel.cs 수정:**
+  - 생성자에 `IServiceProvider` 주입 추가 (`_serviceProvider` 필드)
+  - `HandleMouseUp` 메서드 수정:
+    - 기존 `MessageBox.Show` 코드 제거
+    - API 요청 시작 시:
+      - `ResultWindow` 및 `ResultViewModel` 생성 (DI)
+      - `IsLoading = true` 설정
+      - `ResultWindow.Show()` 호출 (로딩 상태로 표시)
+    - 응답 도착 시:
+      - `ResponseText` 업데이트
+      - `IsLoading = false` 설정
+    - 오류 발생 시:
+      - 오류 메시지를 마크다운 형식으로 `ResultWindow`에 표시
+      - `MessageBox` 대신 `ResultWindow` 사용
+
+#### Tech Details
+- **Markdig.Wpf:** WPF용 마크다운 렌더링 라이브러리 (Markdig 기반)
+- **마크다운 렌더링:** AI 응답의 Bold, List, Code 등 마크다운 문법이 정상적으로 렌더링됨
+- **로딩 상태 관리:** `IsLoading` 속성으로 로딩 인디케이터와 마크다운 뷰어를 전환
+- **창 위치 설정:** 마우스 커서 근처에 창을 배치하여 사용자 경험 향상
+- **ESC 키 지원:** 사용자가 ESC 키를 누르면 창이 닫힘
+- **모던 디자인:** 둥근 모서리, 그림자 효과, 깔끔한 UI 디자인
+- **DI 패턴:** Transient 등록으로 질문할 때마다 새 창 생성 (독립적인 상태 관리)
+- **비동기 처리:** API 응답을 기다리는 동안 로딩 상태 표시로 사용자 피드백 제공
+
+#### Current Status
+- ✅ `Markdig.Wpf` 패키지 설치 완료 (v0.5.0.1)
+- ✅ `ResultViewModel.cs` 생성 완료 (`ObservableObject` 상속, 속성 구현)
+- ✅ `ResultWindow.xaml` 생성 완료 (모던 디자인, 마크다운 뷰어 포함)
+- ✅ `ResultWindow.xaml.cs` 생성 완료 (ESC 키 닫기, 마우스 커서 위치 설정)
+- ✅ `NativeMethods.cs`에 `GetCursorPos` Win32 API 추가 완료
+- ✅ `App.xaml.cs`에 `ResultViewModel`과 `ResultWindow` DI 등록 완료
+- ✅ `App.Services` 정적 속성 추가 완료
+- ✅ `MainViewModel`에 `IServiceProvider` 주입 추가 완료
+- ✅ `MainViewModel`에서 MessageBox 대신 ResultWindow 사용하도록 변경 완료
+- ✅ API 요청 시작 시 ResultWindow 표시 및 로딩 상태 설정 완료
+- ✅ 응답 도착 시 ResponseText 업데이트 및 로딩 상태 해제 완료
+- ✅ 오류 메시지도 ResultWindow로 표시하도록 변경 완료
+- ✅ Linter 에러 없음 확인 완료
+- Phase 4.1 완전히 완료, 다음 단계: Phase 4.2 사용자 설정 (Settings Window) 구현 준비
+
+---
 
 ### 2026-02-05 (목) - Phase 3.1 Gemini API 연동 완료: HttpClient 기반 Gemini 1.5 Pro API 통신 서비스 구현 (13차)
 **[목표]** `HttpClient`를 사용하여 **Gemini 1.5 Pro API**와 통신하는 서비스를 구현하고, 캡처된 이미지와 녹음된 오디오를 멀티모달 요청으로 전송하여 AI 응답을 받는 기능을 완성.

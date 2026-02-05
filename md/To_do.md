@@ -2,7 +2,7 @@
 
 ## 📋 현재 상태 요약 (Current Status Summary)
 
-**프로젝트 상태:** Phase 3.1 완료 ✅ (HttpClient 기반 Gemini 1.5 Pro API 통신 서비스 구현 완료)
+**프로젝트 상태:** Phase 4.1 완료 ✅ (ResultWindow 및 Markdig.Wpf 마크다운 렌더링 구현 완료)
 
 **완료된 주요 기능:**
 - ✅ 프로젝트 생성 및 환경 설정 (.NET 8 WPF)
@@ -23,6 +23,11 @@
 - ✅ Newtonsoft.Json 패키지 설치 완료 (v13.0.3)
 - ✅ Gemini API 서비스 구현 완료 (IGeminiService, GeminiService)
 - ✅ HttpClient 기반 Gemini 1.5 Pro API 통신 기능 구현 완료
+- ✅ Markdig.Wpf 패키지 설치 완료 (v0.5.0.1)
+- ✅ ResultViewModel 구현 완료 (ViewModels/ResultViewModel.cs)
+- ✅ ResultWindow 구현 완료 (Views/ResultWindow.xaml, ResultWindow.xaml.cs)
+- ✅ 마크다운 렌더링 기능 구현 완료
+- ✅ MessageBox 대신 ResultWindow 사용하도록 변경 완료
 
 ---
 
@@ -147,6 +152,24 @@
 - ✅ `OnExit`에서 `HttpClient` Dispose 호출 추가 완료
 - ✅ 에러 처리 및 사용자 친화적 메시지 구현 완료
 
+### Phase 4.1: 결과 뷰어 (Result Window) ✅ 완료
+- ✅ `Markdig.Wpf` 패키지 설치 완료 (v0.5.0.1)
+- ✅ `ViewModels/ResultViewModel.cs` 생성 완료 (`ObservableObject` 상속)
+- ✅ `ResponseText` 속성 구현 완료 (AI 응답 바인딩용)
+- ✅ `IsLoading` 속성 구현 완료 (로딩 상태 표시용)
+- ✅ `LoadingVisibility`, `ContentVisibility` 속성 구현 완료 (UI 표시 제어)
+- ✅ `CloseCommand` 구현 완료 (`RelayCommand`)
+- ✅ `Views/ResultWindow.xaml` 생성 완료 (모던 디자인, 마크다운 뷰어 포함)
+- ✅ `Views/ResultWindow.xaml.cs` 생성 완료 (ESC 키 닫기, 마우스 커서 위치 설정)
+- ✅ `App.xaml.cs`에 `ResultViewModel`과 `ResultWindow` Transient 등록 완료
+- ✅ `App.Services` 정적 속성 추가 완료 (외부 접근용)
+- ✅ `MainViewModel`에 `IServiceProvider` 주입 추가 완료
+- ✅ `MainViewModel`에서 MessageBox 대신 ResultWindow 사용하도록 변경 완료
+- ✅ API 요청 시작 시 ResultWindow 표시 및 로딩 상태 설정 완료
+- ✅ 응답 도착 시 ResponseText 업데이트 및 로딩 상태 해제 완료
+- ✅ 오류 메시지도 ResultWindow로 표시하도록 변경 완료
+- ✅ `NativeMethods.cs`에 `GetCursorPos` Win32 API 추가 완료
+
 ---
 
 ## 🧊 Backlog (예정된 작업)
@@ -245,13 +268,16 @@
   - [x] 예외 처리 (`HttpRequestException`) ✅
   - [x] DTO 클래스 정의 (GeminiService 내부 private class) ✅
 
-#### Phase 4.1: 결과 뷰어 (Result Window)
-- [ ] **ResultWindow 구현**
-  - [ ] `Views/ResultWindow.xaml` 생성
-  - [ ] 마우스 커서 위치 또는 화면 우측 하단에 팝업
-  - [ ] Markdown 렌더링 (`Markdig.Wpf` 또는 `Markdown.Xaml`)
-  - [ ] 로딩 인디케이터 (Skeleton UI 또는 Spinner)
-  - [ ] 외부 클릭 시 닫기 (Light Dismiss) 또는 닫기 버튼
+#### Phase 4.1: 결과 뷰어 (Result Window) ✅ 완료
+- [x] **ResultWindow 구현** ✅
+  - [x] `Views/ResultWindow.xaml` 생성 ✅
+  - [x] 마우스 커서 위치 또는 화면 우측 하단에 팝업 ✅
+  - [x] Markdown 렌더링 (`Markdig.Wpf`) ✅
+  - [x] 로딩 인디케이터 (ProgressBar) ✅
+  - [x] 닫기 버튼 및 ESC 키로 닫기 ✅
+  - [x] `ResultViewModel` 구현 완료 ✅
+  - [x] `App.xaml.cs`에 DI 등록 완료 ✅
+  - [x] `MainViewModel`에서 MessageBox 대신 ResultWindow 사용하도록 변경 완료 ✅
 
 #### Phase 4.2: 사용자 설정 (Settings)
 - [ ] **SettingsWindow 구현**
@@ -302,4 +328,4 @@
 
 ---
 
-**마지막 업데이트**: 2026-02-05 (Phase 3.1 완료 - HttpClient 기반 Gemini 1.5 Pro API 통신 서비스 구현 완료)
+**마지막 업데이트**: 2026-02-05 (Phase 4.1 완료 - ResultWindow 및 Markdig.Wpf 마크다운 렌더링 구현 완료)

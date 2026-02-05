@@ -6,6 +6,7 @@ using System.Windows.Media.Imaging;
 using AI_Mouse.Helpers;
 using AI_Mouse.Services.Interfaces;
 using AI_Mouse.Views;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace AI_Mouse.ViewModels
 {
@@ -18,6 +19,7 @@ namespace AI_Mouse.ViewModels
         private readonly IScreenCaptureService _captureService;
         private readonly IAudioRecorderService _audioService;
         private readonly IGeminiService _geminiService;
+        private readonly IServiceProvider _serviceProvider;
         private OverlayWindow? _overlayWindow;
         private OverlayViewModel? _overlayViewModel;
 
@@ -35,12 +37,14 @@ namespace AI_Mouse.ViewModels
         /// <param name="captureService">화면 캡처 서비스 (DI 주입)</param>
         /// <param name="audioService">오디오 녹음 서비스 (DI 주입)</param>
         /// <param name="geminiService">Gemini API 서비스 (DI 주입)</param>
-        public MainViewModel(IGlobalHookService hookService, IScreenCaptureService captureService, IAudioRecorderService audioService, IGeminiService geminiService)
+        /// <param name="serviceProvider">서비스 프로바이더 (DI 주입)</param>
+        public MainViewModel(IGlobalHookService hookService, IScreenCaptureService captureService, IAudioRecorderService audioService, IGeminiService geminiService, IServiceProvider serviceProvider)
         {
             _hookService = hookService ?? throw new ArgumentNullException(nameof(hookService));
             _captureService = captureService ?? throw new ArgumentNullException(nameof(captureService));
             _audioService = audioService ?? throw new ArgumentNullException(nameof(audioService));
             _geminiService = geminiService ?? throw new ArgumentNullException(nameof(geminiService));
+            _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 
             // 마우스 액션 이벤트 구독
             _hookService.MouseAction += OnMouseAction;
@@ -224,13 +228,23 @@ namespace AI_Mouse.ViewModels
                     // Gemini API 호출
                     if (string.IsNullOrWhiteSpace(ApiKey))
                     {
-                        MessageBox.Show(
-                            "API 키를 설정해주세요.",
-                            "API 키 필요",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Warning);
+                        // ResultWindow를 통해 API 키 필요 메시지 표시
+                        var errorWindow = _serviceProvider.GetRequiredService<ResultWindow>();
+                        var errorViewModel = _serviceProvider.GetRequiredService<ResultViewModel>();
+                        errorViewModel.ResponseText = "## API 키 필요\n\nAPI 키를 설정해주세요.";
+                        errorViewModel.IsLoading = false;
+                        errorWindow.SetViewModel(errorViewModel);
+                        errorWindow.Show();
                         return;
                     }
+
+                    // ResultWindow 생성 및 표시 (로딩 상태로 시작)
+                    var resultWindow = _serviceProvider.GetRequiredService<ResultWindow>();
+                    var resultViewModel = _serviceProvider.GetRequiredService<ResultViewModel>();
+                    resultViewModel.IsLoading = true;
+                    resultViewModel.ResponseText = string.Empty;
+                    resultWindow.SetViewModel(resultViewModel);
+                    resultWindow.Show();
 
                     try
                     {
@@ -240,23 +254,19 @@ namespace AI_Mouse.ViewModels
                         // 결과를 클립보드에 복사
                         Clipboard.SetText(response);
 
-                        // 결과를 메시지 박스로 출력
-                        MessageBox.Show(
-                            $"Gemini 응답:\n\n{response}\n\n(결과가 클립보드에 복사되었습니다.)",
-                            "Gemini 응답",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Information);
+                        // ResultWindow에 응답 표시
+                        resultViewModel.ResponseText = response;
+                        resultViewModel.IsLoading = false;
 
                         Debug.WriteLine($"[MainViewModel] Gemini API 응답 수신 완료");
                     }
                     catch (Exception ex)
                     {
                         Debug.WriteLine($"[MainViewModel] Gemini API 호출 중 오류: {ex.Message}");
-                        MessageBox.Show(
-                            $"Gemini API 호출 중 오류가 발생했습니다:\n{ex.Message}",
-                            "API 오류",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Error);
+                        
+                        // 오류 메시지를 ResultWindow에 표시
+                        resultViewModel.ResponseText = $"## 오류 발생\n\nGemini API 호출 중 오류가 발생했습니다:\n\n```\n{ex.Message}\n```";
+                        resultViewModel.IsLoading = false;
                     }
 
                     Debug.WriteLine($"[MainViewModel] 화면 캡처 및 클립보드 복사 완료: {finalRect.Width}x{finalRect.Height}");
@@ -264,11 +274,14 @@ namespace AI_Mouse.ViewModels
                 catch (Exception ex)
                 {
                     Debug.WriteLine($"[MainViewModel] 화면 캡처 중 오류: {ex.Message}");
-                    MessageBox.Show(
-                        $"화면 캡처 중 오류가 발생했습니다:\n{ex.Message}",
-                        "오류",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Error);
+                    
+                    // ResultWindow를 통해 오류 메시지 표시
+                    var errorWindow = _serviceProvider.GetRequiredService<ResultWindow>();
+                    var errorViewModel = _serviceProvider.GetRequiredService<ResultViewModel>();
+                    errorViewModel.ResponseText = $"## 오류 발생\n\n화면 캡처 중 오류가 발생했습니다:\n\n```\n{ex.Message}\n```";
+                    errorViewModel.IsLoading = false;
+                    errorWindow.SetViewModel(errorViewModel);
+                    errorWindow.Show();
                 }
             }
             else

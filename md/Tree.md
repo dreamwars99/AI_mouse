@@ -22,9 +22,8 @@ AI_Mouse/
 │   ├── OverlayWindow.xaml            # [Phase 1.3] 화면 캡처 오버레이 ✅ 생성됨
 │   └── OverlayWindow.xaml.cs          # [Phase 1.3] OverlayWindow Code-behind ✅ 생성됨
 │   │
-│   └── [Phase 4.1 예정]
-│       ├── ResultWindow.xaml         # AI 응답 표시 창
-│       └── ResultWindow.xaml.cs      # ResultWindow Code-behind
+│   ├── ResultWindow.xaml                # [Phase 4.1] AI 응답 표시 창 ✅ 생성됨
+│   └── ResultWindow.xaml.cs             # [Phase 4.1] ResultWindow Code-behind ✅ 생성됨
 │   │
 │   └── [Phase 4.2 예정]
 │       ├── SettingsWindow.xaml       # 설정 창
@@ -35,8 +34,7 @@ AI_Mouse/
 │   │
 │   ├── OverlayViewModel.cs           # [Phase 1.3] 오버레이 상태 관리 ✅ 생성됨
 │   │
-│   └── [Phase 4.1 예정]
-│       └── ResultViewModel.cs        # 결과 표시 로직
+│   ├── ResultViewModel.cs               # [Phase 4.1] 결과 표시 로직 ✅ 생성됨
 │   │
 │   └── [Phase 4.2 예정]
 │       └── SettingsViewModel.cs      # 설정 화면 로직
@@ -157,6 +155,8 @@ App.xaml.cs (Bootstrapper)
 │   │   ├── Transient: MainWindow ✅
 │   │   ├── Transient: OverlayViewModel ✅ (Phase 1.3)
 │   │   ├── Transient: OverlayWindow ✅ (Phase 1.3)
+│   │   ├── Transient: ResultViewModel ✅ (Phase 4.1)
+│   │   ├── Transient: ResultWindow ✅ (Phase 4.1)
 │   │   ├── Singleton: IGlobalHookService → GlobalHookService ✅
 │   │   ├── Singleton: IScreenCaptureService → ScreenCaptureService ✅ (Phase 2.1)
 │   │   ├── Singleton: IAudioRecorderService → AudioRecorderService ✅ (Phase 2.2)
@@ -249,8 +249,8 @@ App.xaml.cs (Bootstrapper)
        ├── ScreenCaptureService.CaptureRegionAsync() ✅ (Phase 2.1)
        ├── AudioRecorderService.StopRecordingAsync() ✅ (Phase 2.2)
        ├── GeminiService.GetResponseAsync() ✅ (Phase 3.1)
-       └── Clipboard.SetText() + MessageBox.Show() ✅ (Phase 3.1)
-           └── ResultWindow.Show(response) (Phase 4.1 예정)
+       ├── ResultWindow.Show() (로딩 상태로 시작) ✅ (Phase 4.1)
+       └── ResultWindow.ResponseText 업데이트 ✅ (Phase 4.1)
 ```
 
 ---
@@ -402,4 +402,4 @@ graph LR
 ---
 
 **Last Updated:** 2026-02-05  
-**Version:** 1.9 (Phase 3.1 Gemini API 연동 완료 - HttpClient 기반 Gemini 1.5 Pro API 통신 서비스 구현)
+**Version:** 2.0 (Phase 4.1 결과 뷰어 완료 - ResultWindow 및 Markdig.Wpf 마크다운 렌더링 구현)

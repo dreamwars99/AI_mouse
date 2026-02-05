@@ -22,6 +22,11 @@ namespace AI_Mouse
         private OverlayWindow? _overlayWindow;
 
         /// <summary>
+        /// ServiceProvider를 외부에서 접근할 수 있도록 제공합니다.
+        /// </summary>
+        public static IServiceProvider? Services => ((App)Current)._serviceProvider;
+
+        /// <summary>
         /// 애플리케이션 시작 시 DI 컨테이너를 구성하고 MainWindow를 생성합니다.
         /// </summary>
         protected override void OnStartup(StartupEventArgs e)
@@ -39,44 +44,48 @@ namespace AI_Mouse
             services.AddTransient<OverlayViewModel>();
             services.AddTransient<OverlayWindow>();
 
-            // 4. GlobalHookService를 싱글톤으로 등록
+            // 4. ResultViewModel과 ResultWindow를 AddTransient로 등록 (질문할 때마다 새 창을 띄우기 위함)
+            services.AddTransient<ResultViewModel>();
+            services.AddTransient<ResultWindow>();
+
+            // 5. GlobalHookService를 싱글톤으로 등록
             services.AddSingleton<IGlobalHookService, GlobalHookService>();
 
-            // 5. ScreenCaptureService를 싱글톤으로 등록
+            // 6. ScreenCaptureService를 싱글톤으로 등록
             services.AddSingleton<IScreenCaptureService, ScreenCaptureService>();
 
-            // 6. AudioRecorderService를 싱글톤으로 등록
+            // 7. AudioRecorderService를 싱글톤으로 등록
             services.AddSingleton<IAudioRecorderService, AudioRecorderService>();
 
-            // 7. HttpClient를 싱글톤으로 등록
+            // 8. HttpClient를 싱글톤으로 등록
             services.AddSingleton<HttpClient>();
 
-            // 8. GeminiService를 싱글톤으로 등록 (HttpClient 주입)
+            // 9. GeminiService를 싱글톤으로 등록 (HttpClient 주입)
             services.AddSingleton<IGeminiService, GeminiService>();
 
-            // 9. ServiceProvider 빌드
+            // 10. ServiceProvider 빌드
             _serviceProvider = services.BuildServiceProvider();
 
-            // 10. MainWindow 인스턴스를 DI로 생성
+            // 11. MainWindow 인스턴스를 DI로 생성
             var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
 
-            // 11. MainViewModel을 DI로 생성 (IGlobalHookService, IScreenCaptureService, IAudioRecorderService, IGeminiService 자동 주입)
+            // 12. MainViewModel을 DI로 생성 (IGlobalHookService, IScreenCaptureService, IAudioRecorderService, IGeminiService 자동 주입)
             var mainViewModel = _serviceProvider.GetRequiredService<MainViewModel>();
 
-            // 12. MainWindow.DataContext에 MainViewModel 설정
+            // 13. MainWindow.DataContext에 MainViewModel 설정
             mainWindow.DataContext = mainViewModel;
 
-            // 13. MainWindow를 숨김 상태로 유지 (초기 상태)
+            // 14. MainWindow를 숨김 상태로 유지 (초기 상태)
             mainWindow.Hide();
 
-            // 14. OverlayWindow를 미리 생성하되 Hide() 상태로 대기 (반응 속도 최적화)
+            // 15. OverlayWindow를 미리 생성하되 Hide() 상태로 대기 (반응 속도 최적화)
             _overlayWindow = _serviceProvider.GetRequiredService<OverlayWindow>();
             _overlayWindow.Hide();
 
-            // 15. MainViewModel에 OverlayWindow 참조 전달 (Show/Hide를 위해 필요)
+            // 16. MainViewModel에 OverlayWindow 참조 전달 (Show/Hide를 위해 필요)
             mainViewModel.SetOverlayWindow(_overlayWindow);
 
-            // 16. 리소스에서 TaskbarIcon을 찾아 _trayIcon 멤버 변수에 할당
+            // 17. 리소스에서 TaskbarIcon을 찾아 _trayIcon 멤버 변수에 할당
             _trayIcon = (TaskbarIcon)FindResource("TrayIcon");
             
             // 빈 아이콘 에러 방지를 위해 System.Drawing.SystemIcons.Application 할당
@@ -85,7 +94,7 @@ namespace AI_Mouse
                 _trayIcon.Icon = SystemIcons.Application;
             }
 
-            // 17. GlobalHookService를 가져와서 훅 시작
+            // 18. GlobalHookService를 가져와서 훅 시작
             var hookService = _serviceProvider.GetRequiredService<IGlobalHookService>();
             hookService.Start();
 

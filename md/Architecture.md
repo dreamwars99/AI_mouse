@@ -64,10 +64,11 @@ sequenceDiagram
     
     activate VM
     VM->>VM: State = Result
-    VM->>Result: Show(responseText)
+    VM->>Result: Show() (로딩 상태로 시작)
+    VM->>Result: ResponseText 업데이트 (IsLoading = false)
     deactivate VM
     
-    Result->>User: 마크다운 렌더링된 답변 표시
+    Result->>User: 마크다운 렌더링된 답변 표시 ✅
 ```
 
 ### 1.2. 앱 시작 및 트레이 상주 (Startup Flow)
@@ -118,6 +119,7 @@ graph TB
     subgraph "ViewModel Layer (Logic)"
         MainVM[MainViewModel<br/>ObservableObject]
         OverlayVM[OverlayViewModel<br/>ObservableObject]
+        ResultVM[ResultViewModel<br/>ObservableObject]
     end
     
     subgraph "Service Layer (Business Logic)"
@@ -142,12 +144,13 @@ graph TB
     
     MainWindow -->|DataBinding| MainVM
     OverlayWindow -->|DataBinding| OverlayVM
-    ResultWindow -->|DataBinding| MainVM
+    ResultWindow -->|DataBinding| ResultVM
     
     MainVM -->|의존성 주입| HookService
     MainVM -->|의존성 주입| CaptureService
     MainVM -->|의존성 주입| AudioService
     MainVM -->|의존성 주입| GeminiService
+    MainVM -->|의존성 주입| ServiceProvider
     
     HookService -->|사용| NativeMethods
     CaptureService -->|사용| NativeMethods
@@ -166,9 +169,13 @@ graph TB
 ```csharp
 // ViewModel (Transient)
 services.AddTransient<MainViewModel>();
+services.AddTransient<OverlayViewModel>();
+services.AddTransient<ResultViewModel>();
 
 // View (Transient - 필요 시 생성)
 services.AddTransient<MainWindow>();
+services.AddTransient<OverlayWindow>();
+services.AddTransient<ResultWindow>();
 
 // ServiceProvider 빌드
 var serviceProvider = services.BuildServiceProvider();
@@ -207,6 +214,10 @@ MessageBox.Show("AI Mouse가 백그라운드에서 실행되었습니다.\n트�
 - ✅ `IGeminiService` 및 `GeminiService` 구현 완료 (Phase 3.1)
 - ✅ Newtonsoft.Json 패키지 설치 완료 (Phase 3.1)
 - ✅ HttpClient 기반 Gemini 1.5 Pro API 통신 기능 구현 완료 (Phase 3.1)
+- ✅ `ResultViewModel` 및 `ResultWindow` 구현 완료 (Phase 4.1)
+- ✅ Markdig.Wpf 패키지 설치 완료 (Phase 4.1)
+- ✅ 마크다운 렌더링 기능 구현 완료 (Phase 4.1)
+- ✅ MessageBox 대신 ResultWindow 사용하도록 변경 완료 (Phase 4.1)
 
 ---
 
@@ -245,8 +256,9 @@ stateDiagram-v2
     end note
     
     note right of Result
-        ResultWindow 팝업
-        마크다운 렌더링
+        ResultWindow 팝업 ✅
+        마크다운 렌더링 ✅
+        로딩 인디케이터 표시 ✅
     end note
 ```
 
@@ -459,7 +471,8 @@ protected override void OnExit(ExitEventArgs e)
 | **ScreenCaptureService** | 화면 캡처, 이미지 변환 | NativeMethods, DpiHelper |
 | **AudioRecorderService** | 오디오 녹음, WAV 저장 | NAudio ✅ |
 | **GeminiService** | API 통신, 응답 파싱 | Google.GenerativeAI |
-| **ResultWindow** | 마크다운 렌더링, UI 표시 | Markdig.Wpf |
+| **ResultWindow** | 마크다운 렌더링, UI 표시 | Markdig.Wpf ✅ |
+| **ResultViewModel** | 응답 텍스트 및 로딩 상태 관리 | 없음 (순수 상태) |
 
 ---
 
@@ -475,4 +488,4 @@ protected override void OnExit(ExitEventArgs e)
 ---
 
 **Last Updated:** 2026-02-05  
-**Version:** 1.9 (Phase 3.1 Gemini API 연동 완료 - HttpClient 기반 Gemini 1.5 Pro API 통신 서비스 구현)
+**Version:** 2.0 (Phase 4.1 결과 뷰어 완료 - ResultWindow 및 Markdig.Wpf 마크다운 렌더링 구현)

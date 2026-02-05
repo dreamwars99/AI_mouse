@@ -161,5 +161,14 @@ namespace AI_Mouse.Helpers
         [DllImport("shcore.dll", CharSet = CharSet.Auto, SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool GetDpiForMonitor(IntPtr hmonitor, MonitorDpiType dpiType, out uint dpiX, out uint dpiY);
+
+        /// <summary>
+        /// 현재 마우스 커서의 화면 좌표를 가져옵니다.
+        /// </summary>
+        /// <param name="lpPoint">마우스 커서 좌표를 받을 Point 구조체 (출력 파라미터)</param>
+        /// <returns>성공 여부</returns>
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool GetCursorPos(out Point lpPoint);
     }
 }
