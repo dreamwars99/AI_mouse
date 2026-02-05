@@ -4,7 +4,7 @@
 - **Role:** Lead Architect & Cursor AI
 - **Framework:** .NET 8 (WPF)
 - **Platform:** Windows 10 / 11 Desktop
-- **Last Updated:** 2026-02-05 (Phase 4.1 결과 뷰어 완료 - ResultWindow 및 Markdig.Wpf 마크다운 렌더링 구현)
+- **Last Updated:** 2026-02-05 (API Key 외부 파일 분리 완료 - 보안 강화 및 GitHub 유출 방지)
 
 ## 📌 1. Development Environment (개발 환경 상세)
 이 프로젝트를 이어받는 AI/개발자는 아래 설정을 필수로 확인해야 합니다.
@@ -72,6 +72,7 @@ AI_Mouse/
 - `GlobalHookService`: 마우스/키보드 전역 이벤트 감지 (User32.dll) ✅
 - `ScreenCaptureService`: GDI+를 이용한 화면 캡처 ✅
 - `AudioRecorderService`: NAudio 기반 음성 녹음 ✅
+- 
 - `GeminiService`: HttpClient 기반 Gemini 1.5 Pro API 통신 ✅
 
 **Views (Implemented)**
@@ -86,6 +87,61 @@ AI_Mouse/
 
 
 ****## 📅 4. Development Log (개발 기록)
+
+### 2026-02-05 (목) - API Key 외부 파일 분리: 보안 강화 및 GitHub 유출 방지 (15차)
+**[목표]** API Key가 GitHub에 유출되는 것을 막기 위해, 외부 파일(`apikey.txt`)에서 키를 로드하는 안전한 구조로 변경하여 보안을 강화.
+
+#### Dev Action (API Key Externalization)
+- **.gitignore 수정:**
+  - `apikey.txt` 파일을 `.gitignore`에 추가
+  - 이 파일이 절대 Git에 커밋되지 않도록 보장
+  - PowerShell `Add-Content` 명령으로 추가
+
+- **AI_Mouse.csproj 수정:**
+  - `<ItemGroup>` 섹션에 `<None Update="apikey.txt">` 항목 추가
+  - `CopyToOutputDirectory` 속성을 `PreserveNewest`로 설정
+  - 빌드 시 `apikey.txt` 파일이 존재할 경우 출력 디렉토리(bin/Debug 등)로 자동 복사
+  - 실행 파일과 같은 폴더에 API Key 파일이 위치하도록 보장
+
+- **ViewModels/MainViewModel.cs 수정:**
+  - 기존 `private const string ApiKey = "";` 상수 제거
+  - 코드에 API Key를 하드코딩하지 않도록 변경
+  - `LoadApiKey()` 메서드 구현:
+    - `AppDomain.CurrentDomain.BaseDirectory` 경로에서 `apikey.txt` 파일 찾기
+    - 파일이 존재하면 내용을 읽어 공백 제거(`Trim()`) 후 반환
+    - 파일이 없거나 읽기 실패 시 `null` 반환
+    - 예외 처리 포함 (`try-catch`) - 파일 읽기 실패 시에도 앱이 멈추지 않도록 보장
+    - 디버그 로그 출력으로 문제 진단 가능
+  - `HandleMouseUp` 메서드 수정:
+    - `LoadApiKey()` 호출하여 런타임에 API Key 로드
+    - 키가 없으면 `MessageBox.Show`로 사용자 안내 메시지 표시:
+      - "실행 폴더에 apikey.txt 파일을 만들고 키를 넣어주세요."
+    - 키가 있으면 기존 로직대로 Gemini API 호출
+
+- **using 문 추가:**
+  - `System.IO` 네임스페이스 추가 (`File`, `Path` 클래스 사용)
+
+#### Tech Details
+- **보안 강화:** API Key를 코드에서 완전히 분리하여 GitHub 유출 방지
+- **파일 기반 관리:** 외부 파일(`apikey.txt`)에서 런타임에 로드
+- **Git 보호:** `.gitignore`에 추가하여 실수로 커밋되는 것을 방지
+- **빌드 통합:** MSBuild 설정으로 빌드 시 자동 복사
+- **예외 처리:** 파일 읽기 실패 시에도 앱이 안정적으로 동작
+- **사용자 안내:** 키가 없을 때 명확한 안내 메시지 제공
+- **디버그 지원:** 로그 출력으로 문제 진단 가능
+
+#### Current Status
+- ✅ `.gitignore`에 `apikey.txt` 추가 완료
+- ✅ `AI_Mouse.csproj`에 파일 복사 설정 추가 완료 (`CopyToOutputDirectory="PreserveNewest"`)
+- ✅ `MainViewModel.cs`에서 API Key 상수 제거 완료
+- ✅ `LoadApiKey()` 메서드 구현 완료 (파일 읽기, 예외 처리 포함)
+- ✅ `HandleMouseUp` 메서드에서 `LoadApiKey()` 호출하도록 수정 완료
+- ✅ API Key 없을 때 사용자 안내 메시지 구현 완료 (`MessageBox.Show`)
+- ✅ `System.IO` 네임스페이스 추가 완료
+- ✅ Linter 에러 없음 확인 완료
+- 보안 개선 완료, API Key가 코드에 하드코딩되지 않음
+
+---
 
 ### 2026-02-05 (목) - Phase 4.1 결과 뷰어 완료: ResultWindow 및 Markdig.Wpf 마크다운 렌더링 구현 (14차)
 **[목표]** `MessageBox` 대신 **AI의 응답을 보여줄 전용 윈도우(ResultWindow)**를 구현하고, **`Markdig.Wpf`** 라이브러리를 사용하여 마크다운 텍스트를 렌더링하는 기능을 완성.

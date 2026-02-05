@@ -14,6 +14,7 @@ AI_Mouse/
 ├── App.xaml                       # 애플리케이션 리소스 정의
 ├── AI_Mouse.csproj                # 프로젝트 파일 (.NET 8 WPF)
 ├── AI_Mouse.sln                   # 솔루션 파일
+├── apikey.txt                     # [보안] API Key 파일 (.gitignore에 의해 무시됨) ✅
 │
 ├── Views/                         # [UI] XAML 및 Code-behind ✅ 생성됨
 │   ├── MainWindow.xaml           # 메인 윈도우 (초기엔 Hidden 예정)
@@ -402,4 +403,4 @@ graph LR
 ---
 
 **Last Updated:** 2026-02-05  
-**Version:** 2.0 (Phase 4.1 결과 뷰어 완료 - ResultWindow 및 Markdig.Wpf 마크다운 렌더링 구현)
+**Version:** 2.1 (API Key 외부 파일 분리 완료 - 보안 강화 및 GitHub 유출 방지)

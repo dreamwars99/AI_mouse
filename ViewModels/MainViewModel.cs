@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Windows;
 using System.Windows.Media.Imaging;
 using AI_Mouse.Helpers;
@@ -26,9 +27,6 @@ namespace AI_Mouse.ViewModels
         // 드래그 시작점 좌표 (화면 좌표계 - 물리 좌표)
         private int _dragStartX;
         private int _dragStartY;
-
-        // TODO: 여기에 Google AI Studio API Key를 입력하세요
-        private const string ApiKey = "";
 
         /// <summary>
         /// MainViewModel 생성자
@@ -225,16 +223,16 @@ namespace AI_Mouse.ViewModels
                         // 오디오 녹음 오류는 무시하고 계속 진행
                     }
 
-                    // Gemini API 호출
-                    if (string.IsNullOrWhiteSpace(ApiKey))
+                    // API Key 로드
+                    string? apiKey = LoadApiKey();
+                    if (string.IsNullOrWhiteSpace(apiKey))
                     {
-                        // ResultWindow를 통해 API 키 필요 메시지 표시
-                        var errorWindow = _serviceProvider.GetRequiredService<ResultWindow>();
-                        var errorViewModel = _serviceProvider.GetRequiredService<ResultViewModel>();
-                        errorViewModel.ResponseText = "## API 키 필요\n\nAPI 키를 설정해주세요.";
-                        errorViewModel.IsLoading = false;
-                        errorWindow.SetViewModel(errorViewModel);
-                        errorWindow.Show();
+                        // API Key가 없으면 사용자에게 안내
+                        MessageBox.Show(
+                            "실행 폴더에 apikey.txt 파일을 만들고 키를 넣어주세요.",
+                            "API 키 필요",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Warning);
                         return;
                     }
 
@@ -249,7 +247,7 @@ namespace AI_Mouse.ViewModels
                     try
                     {
                         // Gemini API 호출
-                        string response = await _geminiService.GetResponseAsync(capturedImage, audioPath, ApiKey);
+                        string response = await _geminiService.GetResponseAsync(capturedImage, audioPath, apiKey);
 
                         // 결과를 클립보드에 복사
                         Clipboard.SetText(response);
@@ -295,6 +293,49 @@ namespace AI_Mouse.ViewModels
                 {
                     Debug.WriteLine($"[MainViewModel] 오디오 녹음 중지 중 오류: {ex.Message}");
                 }
+            }
+        }
+
+        /// <summary>
+        /// 외부 파일(apikey.txt)에서 API Key를 로드합니다.
+        /// </summary>
+        /// <returns>API Key 문자열 (파일이 없거나 읽기 실패 시 null 또는 빈 문자열)</returns>
+        /// <remarks>
+        /// 보안: API Key는 코드에 하드코딩하지 않고 외부 파일에서 로드하여 GitHub 유출을 방지합니다.
+        /// 파일 경로: AppDomain.CurrentDomain.BaseDirectory (실행 파일과 같은 폴더)
+        /// </remarks>
+        private string? LoadApiKey()
+        {
+            try
+            {
+                // 실행 파일과 같은 폴더에서 apikey.txt 찾기
+                string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+                string apiKeyPath = Path.Combine(baseDirectory, "apikey.txt");
+
+                // 파일이 존재하는지 확인
+                if (!File.Exists(apiKeyPath))
+                {
+                    Debug.WriteLine($"[MainViewModel] API Key 파일을 찾을 수 없습니다: {apiKeyPath}");
+                    return null;
+                }
+
+                // 파일 내용 읽기 (공백 제거)
+                string apiKey = File.ReadAllText(apiKeyPath).Trim();
+
+                if (string.IsNullOrWhiteSpace(apiKey))
+                {
+                    Debug.WriteLine("[MainViewModel] API Key 파일이 비어있습니다.");
+                    return null;
+                }
+
+                Debug.WriteLine("[MainViewModel] API Key 로드 성공");
+                return apiKey;
+            }
+            catch (Exception ex)
+            {
+                // 파일 읽기 실패 시 예외 처리 (앱이 멈추지 않도록)
+                Debug.WriteLine($"[MainViewModel] API Key 로드 중 오류 발생: {ex.Message}");
+                return null;
             }
         }
     }

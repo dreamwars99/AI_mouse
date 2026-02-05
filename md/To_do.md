@@ -2,7 +2,7 @@
 
 ## 📋 현재 상태 요약 (Current Status Summary)
 
-**프로젝트 상태:** Phase 4.1 완료 ✅ (ResultWindow 및 Markdig.Wpf 마크다운 렌더링 구현 완료)
+**프로젝트 상태:** Phase 4.1 완료 ✅ (ResultWindow 및 Markdig.Wpf 마크다운 렌더링 구현 완료) + 보안 개선 (API Key 외부 파일 분리)
 
 **완료된 주요 기능:**
 - ✅ 프로젝트 생성 및 환경 설정 (.NET 8 WPF)
@@ -28,6 +28,9 @@
 - ✅ ResultWindow 구현 완료 (Views/ResultWindow.xaml, ResultWindow.xaml.cs)
 - ✅ 마크다운 렌더링 기능 구현 완료
 - ✅ MessageBox 대신 ResultWindow 사용하도록 변경 완료
+- ✅ API Key 외부 파일 분리 완료 (apikey.txt)
+- ✅ .gitignore에 apikey.txt 추가 완료 (GitHub 유출 방지)
+- ✅ MainViewModel.LoadApiKey() 메서드 구현 완료
 
 ---
 
@@ -328,4 +331,4 @@
 
 ---
 
-**마지막 업데이트**: 2026-02-05 (Phase 4.1 완료 - ResultWindow 및 Markdig.Wpf 마크다운 렌더링 구현 완료)
+**마지막 업데이트**: 2026-02-05 (API Key 외부 파일 분리 완료 - 보안 강화 및 GitHub 유출 방지)

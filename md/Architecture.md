@@ -440,10 +440,14 @@ protected override void OnExit(ExitEventArgs e)
 
 ## 7. 🔐 Security & Configuration (보안 및 설정)
 
-### 7.1. API Key 관리
+### 7.1. API Key 관리 ✅ 구현 완료
 
-- **저장 위치:** Windows Credential Manager 또는 암호화된 로컬 파일
-- **입력:** Settings 창에서 사용자 입력
+- **저장 위치:** 외부 파일 `apikey.txt` (실행 파일과 같은 폴더) ✅
+- **보안:** `.gitignore`에 `apikey.txt` 추가하여 Git 커밋 방지 ✅
+- **로드 방식:** `MainViewModel.LoadApiKey()` 메서드로 런타임에 파일에서 로드 ✅
+- **파일 경로:** `AppDomain.CurrentDomain.BaseDirectory/apikey.txt` ✅
+- **빌드 설정:** `AI_Mouse.csproj`에 `CopyToOutputDirectory="PreserveNewest"` 설정으로 출력 디렉토리로 자동 복사 ✅
+- **예외 처리:** 파일 읽기 실패 시 `null` 반환 및 사용자 안내 메시지 표시 ✅
 - **전송:** HTTPS로만 전송 (SDK 내장)
 
 ### 7.2. DPI Awareness ✅ 구현 완료
@@ -488,4 +492,4 @@ protected override void OnExit(ExitEventArgs e)
 ---
 
 **Last Updated:** 2026-02-05  
-**Version:** 2.0 (Phase 4.1 결과 뷰어 완료 - ResultWindow 및 Markdig.Wpf 마크다운 렌더링 구현)
+**Version:** 2.1 (API Key 외부 파일 분리 완료 - 보안 강화 및 GitHub 유출 방지)
