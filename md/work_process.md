@@ -4,7 +4,7 @@
 - **Role:** Lead Architect & Cursor AI
 - **Framework:** .NET 8 (WPF)
 - **Platform:** Windows 10 / 11 Desktop
-- **Last Updated:** 2026-02-05 (Phase 1.1 완료 - UX 피드백 및 검증 기능 추가 완료)
+- **Last Updated:** 2026-02-05 (Phase 1.2 완료 - 전역 마우스 훅 구현 완료)
 
 ## 📌 1. Development Environment (개발 환경 상세)
 이 프로젝트를 이어받는 AI/개발자는 아래 설정을 필수로 확인해야 합니다.
@@ -66,6 +66,63 @@ AI_Mouse/
 - `AudioRecorderService`: NAudio 기반 음성 녹음.
 
 ## 📅 4. Development Log (개발 기록)
+
+### 2026-02-05 (목) - Phase 1.2 전역 마우스 훅 구현 (8차)
+**[목표]** Windows API(User32.dll)를 사용하여 **전역 마우스 이벤트를 감지하는 시스템(Global Hook)**을 구현하여 앱이 백그라운드에서 마우스 이벤트를 실시간으로 감지할 수 있도록 완성.
+
+#### Dev Action (Global Mouse Hook Implementation)
+- **Helpers/NativeMethods.cs 생성:**
+  - Win32 API P/Invoke 선언 (`SetWindowsHookEx`, `UnhookWindowsHookEx`, `CallNextHookEx`, `GetModuleHandle`)
+  - `WH_MOUSE_LL` (14) 상수 정의
+  - `MSLLHOOKSTRUCT` 구조체 정의 (마우스 좌표, 버튼 정보 등)
+  - 마우스 메시지 상수 정의 (`MouseMessages` 클래스: `WM_MOUSEMOVE`, `WM_LBUTTONDOWN/UP`, `WM_RBUTTONDOWN/UP`, `WM_MBUTTONDOWN/UP`, `WM_XBUTTONDOWN/UP`)
+
+- **Services/Interfaces/IGlobalHookService.cs 생성:**
+  - `IGlobalHookService` 인터페이스 정의 (`IDisposable` 상속)
+  - `MouseAction` 이벤트 정의 (`EventHandler<MouseActionEventArgs>`)
+  - `Start()`, `Stop()` 메서드 정의
+  - `IsActive` 속성 정의
+  - `MouseActionEventArgs` 클래스 정의 (액션 타입, 좌표, 버튼 정보 포함)
+  - `MouseActionType` 열거형 정의 (`Move`, `Down`, `Up`)
+  - `MouseButton` 열거형 정의 (`None`, `Left`, `Right`, `Middle`, `XButton1`, `XButton2`)
+
+- **Services/Implementations/GlobalHookService.cs 생성:**
+  - `IGlobalHookService` 인터페이스 구현
+  - `Start()` 메서드: `SetWindowsHookEx(WH_MOUSE_LL)`로 전역 마우스 훅 설치
+  - `Stop()` 메서드: `UnhookWindowsHookEx`로 훅 해제
+  - `HookCallback` 메서드: Win32 콜백 프로시저 (경량화를 위해 `Task.Run`으로 비동기 처리)
+  - `ProcessMouseMessage` 메서드: 마우스 메시지 파싱 및 `MouseAction` 이벤트 발생
+  - 모든 마우스 버튼 이벤트 처리 (Left, Right, Middle, XButton1, XButton2)
+  - `Dispose()` 패턴 구현: 앱 종료 시 훅 해제 보장
+  - 소멸자 추가: 안전장치로 훅 해제 보장
+  - 디버그 로그 출력 (`Debug.WriteLine`)으로 마우스 이벤트 추적
+
+- **App.xaml.cs 수정:**
+  - `IGlobalHookService`를 싱글톤으로 DI 등록 (`services.AddSingleton<IGlobalHookService, GlobalHookService>()`)
+  - `OnStartup`에서 `GlobalHookService` 인스턴스를 가져와 `Start()` 호출
+  - `OnExit`에서 `GlobalHookService.Stop()` 호출하여 훅 해제 보장
+  - 예외 처리 추가 (훅 중지 실패 시에도 앱 종료 보장)
+
+#### Tech Details
+- **Win32 Hook:** `SetWindowsHookEx`의 `WH_MOUSE_LL` (Low-level 마우스 훅) 사용하여 전역 마우스 이벤트 감지
+- **콜백 경량화:** 훅 콜백 메서드는 최대한 가볍게 작성하고, 무거운 작업은 `Task.Run`으로 비동기 처리하여 시스템 성능에 영향 최소화
+- **리소스 관리:** `IDisposable` 패턴과 `OnExit` 오버라이드를 통해 앱 종료 시 훅이 반드시 해제되도록 보장 (훅이 해제되지 않으면 OS가 느려질 수 있음)
+- **이벤트 구조:** 단일 `MouseAction` 이벤트로 통합하여 이벤트 인자에 액션 타입, 좌표, 버튼 정보를 포함
+- **디버깅:** 모든 마우스 이벤트를 `Debug.WriteLine`으로 로깅하여 개발 중 이벤트 추적 가능
+
+#### Current Status
+- ✅ `NativeMethods.cs` 생성 완료 (Win32 API P/Invoke 선언)
+- ✅ `IGlobalHookService.cs` 생성 완료 (인터페이스 및 이벤트 인자 정의)
+- ✅ `GlobalHookService.cs` 생성 완료 (훅 서비스 구현)
+- ✅ 전역 마우스 훅 설치/해제 로직 구현 완료
+- ✅ 마우스 이벤트 감지 및 디버그 로그 출력 완료
+- ✅ 비동기 이벤트 처리로 콜백 경량화 완료
+- ✅ `IDisposable` 패턴 구현 완료 (리소스 안전 해제)
+- ✅ `App.xaml.cs`에서 DI 등록 및 `Start()` 호출 완료
+- ✅ `OnExit`에서 `Stop()` 호출 완료 (훅 해제 보장)
+- Phase 1.2 완전히 완료, 다음 단계: Phase 1.3 시각적 피드백 (Overlay View) 구현 준비
+
+---
 
 ### 2026-02-05 (목) - Phase 1.1 UX 피드백 및 검증 기능 추가 (7차)
 **[목표]** Phase 1.1의 핵심인 **DI 컨테이너 구성**과 **트레이 아이콘** 구현을 완료하고, 실행 여부를 확인할 수 있도록 **검증용 메시지 박스** 및 이벤트 핸들러를 추가하여 사용자 피드백을 개선.

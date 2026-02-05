@@ -6,6 +6,8 @@ using Hardcodet.Wpf.TaskbarNotification;
 using AI_Mouse.Views;
 using AI_Mouse.ViewModels;
 using System.Drawing;
+using AI_Mouse.Services.Interfaces;
+using AI_Mouse.Services.Implementations;
 
 namespace AI_Mouse
 {
@@ -31,19 +33,22 @@ namespace AI_Mouse
             services.AddTransient<MainViewModel>();
             services.AddTransient<MainWindow>();
 
-            // 3. ServiceProvider 빌드
+            // 3. GlobalHookService를 싱글톤으로 등록
+            services.AddSingleton<IGlobalHookService, GlobalHookService>();
+
+            // 4. ServiceProvider 빌드
             _serviceProvider = services.BuildServiceProvider();
 
-            // 4. MainWindow 인스턴스를 DI로 생성
+            // 5. MainWindow 인스턴스를 DI로 생성
             var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
 
-            // 5. MainWindow.DataContext에 MainViewModel 주입
+            // 6. MainWindow.DataContext에 MainViewModel 주입
             mainWindow.DataContext = _serviceProvider.GetRequiredService<MainViewModel>();
 
-            // 6. MainWindow를 숨김 상태로 유지 (초기 상태)
+            // 7. MainWindow를 숨김 상태로 유지 (초기 상태)
             mainWindow.Hide();
 
-            // 7. 리소스에서 TaskbarIcon을 찾아 _trayIcon 멤버 변수에 할당
+            // 8. 리소스에서 TaskbarIcon을 찾아 _trayIcon 멤버 변수에 할당
             _trayIcon = (TaskbarIcon)FindResource("TrayIcon");
             
             // 빈 아이콘 에러 방지를 위해 System.Drawing.SystemIcons.Application 할당
@@ -51,6 +56,10 @@ namespace AI_Mouse
             {
                 _trayIcon.Icon = SystemIcons.Application;
             }
+
+            // 9. GlobalHookService를 가져와서 훅 시작
+            var hookService = _serviceProvider.GetRequiredService<IGlobalHookService>();
+            hookService.Start();
 
             // 검증: 앱 실행 확인용 메시지 박스 출력
             MessageBox.Show(
@@ -65,10 +74,24 @@ namespace AI_Mouse
         /// </summary>
         protected override void OnExit(ExitEventArgs e)
         {
+            // GlobalHookService 중지 (훅 해제)
+            if (_serviceProvider != null)
+            {
+                try
+                {
+                    var hookService = _serviceProvider.GetService<IGlobalHookService>();
+                    hookService?.Stop();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[App] 훅 중지 중 오류: {ex.Message}");
+                }
+            }
+
             // 트레이 아이콘 정리
             _trayIcon?.Dispose();
 
-            // ServiceProvider 정리
+            // ServiceProvider 정리 (모든 IDisposable 서비스 해제)
             _serviceProvider?.Dispose();
 
             base.OnExit(e);

@@ -43,20 +43,20 @@ AI_Mouse/
 │   └── [Phase 4.2 예정]
 │       └── SettingsViewModel.cs      # 설정 화면 로직
 │
-├── Services/                      # [Core] 비즈니스 로직 및 시스템 제어 ⏳ 생성 예정
-│   ├── Interfaces/                # 서비스 인터페이스
-│   │   ├── IGlobalHookService.cs          # [Phase 1.2] 전역 입력 감지
-│   │   ├── IScreenCaptureService.cs       # [Phase 2.1] 화면 캡처
-│   │   ├── IAudioRecorderService.cs       # [Phase 2.2] 음성 녹음
-│   │   ├── IGeminiService.cs              # [Phase 3.1] Gemini API
-│   │   └── ITrayService.cs                # 트레이 아이콘 관리
+├── Services/                      # [Core] 비즈니스 로직 및 시스템 제어 ✅ 생성됨
+│   ├── Interfaces/                # 서비스 인터페이스 ✅ 생성됨
+│   │   ├── IGlobalHookService.cs          # [Phase 1.2] 전역 입력 감지 ✅ 생성됨
+│   │   ├── IScreenCaptureService.cs       # [Phase 2.1] 화면 캡처 ⏳ 생성 예정
+│   │   ├── IAudioRecorderService.cs       # [Phase 2.2] 음성 녹음 ⏳ 생성 예정
+│   │   ├── IGeminiService.cs              # [Phase 3.1] Gemini API ⏳ 생성 예정
+│   │   └── ITrayService.cs                # 트레이 아이콘 관리 ⏳ 생성 예정
 │   │
-│   └── Implementations/           # 서비스 구현체
-│       ├── GlobalHookService.cs            # [Phase 1.2] Win32 Hook 구현
-│       ├── ScreenCaptureService.cs        # [Phase 2.1] GDI+ 캡처 구현
-│       ├── AudioRecorderService.cs        # [Phase 2.2] NAudio 녹음 구현
-│       ├── GeminiService.cs               # [Phase 3.1] API 클라이언트 구현
-│       └── TrayService.cs                 # 트레이 아이콘 구현
+│   └── Implementations/           # 서비스 구현체 ✅ 생성됨
+│       ├── GlobalHookService.cs            # [Phase 1.2] Win32 Hook 구현 ✅ 생성됨
+│       ├── ScreenCaptureService.cs        # [Phase 2.1] GDI+ 캡처 구현 ⏳ 생성 예정
+│       ├── AudioRecorderService.cs        # [Phase 2.2] NAudio 녹음 구현 ⏳ 생성 예정
+│       ├── GeminiService.cs               # [Phase 3.1] API 클라이언트 구현 ⏳ 생성 예정
+│       └── TrayService.cs                 # 트레이 아이콘 구현 ⏳ 생성 예정
 │
 ├── Models/                        # [Data] 데이터 구조 (DTO) ⏳ 생성 예정
 │   ├── AppState.cs                # 앱 상태 (Idle/Listening/Processing/Result)
@@ -64,9 +64,9 @@ AI_Mouse/
 │   ├── AudioData.cs               # [Phase 2.2] 오디오 데이터 모델
 │   └── ApiResponse.cs             # [Phase 3.1] API 응답 모델
 │
-├── Helpers/                       # [Util] Win32 Interop, 컨버터 등 ⏳ 생성 예정
-│   ├── NativeMethods.cs           # [Phase 1.2] Win32 P/Invoke 선언
-│   ├── DpiHelper.cs               # [Phase 2.1] DPI 좌표 변환 유틸리티
+├── Helpers/                       # [Util] Win32 Interop, 컨버터 등 ✅ 생성됨
+│   ├── NativeMethods.cs           # [Phase 1.2] Win32 P/Invoke 선언 ✅ 생성됨
+│   ├── DpiHelper.cs               # [Phase 2.1] DPI 좌표 변환 유틸리티 ⏳ 생성 예정
 │   └── Converters/                # WPF Value Converter
 │       └── (필요 시 추가)
 │
@@ -156,8 +156,8 @@ App.xaml.cs (Bootstrapper)
 │   ├── ServiceCollection 생성 ✅
 │   ├── Services 등록:
 │   │   ├── Transient: MainViewModel ✅
-│   │   └── Transient: MainWindow ✅
-│   │   └── (추후 Phase 1.2에서 서비스 등록 예정)
+│   │   ├── Transient: MainWindow ✅
+│   │   └── Singleton: IGlobalHookService → GlobalHookService ✅
 │   │
 │   ├── ServiceProvider 빌드 ✅
 │   ├── MainWindow 인스턴스 생성 (DI) ✅
@@ -203,8 +203,12 @@ App.xaml.cs (Bootstrapper)
    ├── 6. MessageBox 검증 메시지 출력 ✅
    │   └── "AI Mouse가 백그라운드에서 실행되었습니다." 안내
    │
-   └── 7. 앱이 백그라운드에서 대기 (Idle 상태) ✅
-       └── (Phase 1.2에서 GlobalHookService 시작 예정)
+   ├── 7. GlobalHookService 시작 ✅
+   │   ├── IGlobalHookService 인스턴스 가져오기 (DI)
+   │   └── hookService.Start() 호출 (전역 마우스 훅 설치)
+   │
+   └── 8. 앱이 백그라운드에서 대기 (Idle 상태) ✅
+       └── 전역 마우스 훅 활성화 완료 ✅
 ```
 
 ### 3.2. 사용자 질의 시퀀스
@@ -384,4 +388,4 @@ graph LR
 ---
 
 **Last Updated:** 2026-02-05  
-**Version:** 1.3 (Phase 1.1 완료 - UX 피드백 및 검증 기능 추가 완료)
+**Version:** 1.4 (Phase 1.2 완료 - 전역 마우스 훅 구현 완료)

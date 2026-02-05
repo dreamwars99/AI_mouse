@@ -2,15 +2,16 @@
 
 ## 📋 현재 상태 요약 (Current Status Summary)
 
-**프로젝트 상태:** Phase 1.1 완료 ✅ (프로젝트 초기 세팅 완료)
+**프로젝트 상태:** Phase 1.2 완료 ✅ (전역 마우스 훅 구현 완료)
 
 **완료된 주요 기능:**
 - ✅ 프로젝트 생성 및 환경 설정 (.NET 8 WPF)
 - ✅ NuGet 패키지 설치 (CommunityToolkit.Mvvm, Microsoft.Extensions.DependencyInjection, Hardcodet.NotifyIcon.Wpf)
-- ✅ 기본 폴더 구조 구축 (Views/, ViewModels/)
+- ✅ 기본 폴더 구조 구축 (Views/, ViewModels/, Services/, Helpers/)
 - ✅ MainViewModel 클래스 생성
 - ✅ MVVM 및 DI 컨테이너 구성 완료
 - ✅ 트레이 아이콘 구현 완료
+- ✅ 전역 마우스 훅 구현 완료 (NativeMethods, IGlobalHookService, GlobalHookService)
 
 ---
 
@@ -29,10 +30,10 @@
   - [x] `Views/` 폴더 생성 및 `MainWindow.xaml` 이동 ✅
   - [x] `ViewModels/` 폴더 생성 ✅
   - [x] 네임스페이스 수정 (`AI_Mouse.Views` 등) ✅
-  - [ ] `Services/Interfaces/` 폴더 생성 (Phase 1.2에서 생성 예정)
-  - [ ] `Services/Implementations/` 폴더 생성 (Phase 1.2에서 생성 예정)
-  - [ ] `Models/` 폴더 생성 (Phase 1.2에서 생성 예정)
-  - [ ] `Helpers/` 폴더 생성 (Phase 1.2에서 생성 예정)
+  - [x] `Services/Interfaces/` 폴더 생성 ✅
+  - [x] `Services/Implementations/` 폴더 생성 ✅
+  - [ ] `Models/` 폴더 생성 (Phase 2 예정)
+  - [x] `Helpers/` 폴더 생성 ✅
 
 - [x] **MVVM 기본 구조** ✅ 완료
   - [x] `ViewModels/MainViewModel.cs` 생성 (`ObservableObject` 상속) ✅
@@ -72,31 +73,49 @@
 - ✅ 시스템 트레이 아이콘 구현 (`TaskbarIcon` 리소스 및 ContextMenu)
 - ✅ 앱 생명주기 관리 (초기 숨김 상태, Closing 이벤트 처리)
 
+### Phase 1.2: 전역 입력 감지 ✅ 완료
+- ✅ `Helpers/NativeMethods.cs` 생성 (Win32 API P/Invoke 선언)
+- ✅ `Services/Interfaces/IGlobalHookService.cs` 생성 (인터페이스 정의)
+- ✅ `Services/Implementations/GlobalHookService.cs` 생성 (훅 서비스 구현)
+- ✅ 전역 마우스 훅 설치/해제 로직 구현 (`SetWindowsHookEx`, `UnhookWindowsHookEx`)
+- ✅ 마우스 이벤트 감지 및 디버그 로그 출력
+- ✅ 비동기 이벤트 처리로 콜백 경량화 (`Task.Run`)
+- ✅ `IDisposable` 패턴 구현으로 리소스 안전 해제
+- ✅ `App.xaml.cs`에서 싱글톤 등록 및 `Start()` 호출
+- ✅ `OnExit`에서 `Stop()` 호출하여 훅 해제 보장
+
 ---
 
 ## 🧊 Backlog (예정된 작업)
 
 ### 🔴 High Priority (높은 우선순위)
 
-#### Phase 1.2: 전역 입력 감지 (Global Input Hook)
-- [ ] **User32.dll P/Invoke 구현**
-  - [ ] `Helpers/NativeMethods.cs` 생성
-  - [ ] `LowLevelMouseProc` 콜백 구현
-  - [ ] `SetWindowsHookEx(WH_MOUSE_LL)` 연동
-  - [ ] `UnhookWindowsHookEx` 해제 로직
+#### Phase 1.2: 전역 입력 감지 (Global Input Hook) ✅ 완료
+- [x] **User32.dll P/Invoke 구현** ✅
+  - [x] `Helpers/NativeMethods.cs` 생성 ✅
+  - [x] `LowLevelMouseProc` 콜백 구현 ✅
+  - [x] `SetWindowsHookEx(WH_MOUSE_LL)` 연동 ✅
+  - [x] `UnhookWindowsHookEx` 해제 로직 ✅
+  - [x] `MSLLHOOKSTRUCT` 구조체 정의 ✅
+  - [x] 마우스 메시지 상수 정의 (WM_MOUSEMOVE, WM_LBUTTONDOWN 등) ✅
 
-- [ ] **마우스 이벤트 필터링**
-  - [ ] `WM_XBUTTONDOWN` 처리
-  - [ ] `WM_XBUTTONUP` 처리
-  - [ ] `WM_MOUSEMOVE` 처리 (드래그 추적)
+- [x] **마우스 이벤트 필터링** ✅
+  - [x] `WM_XBUTTONDOWN` 처리 ✅
+  - [x] `WM_XBUTTONUP` 처리 ✅
+  - [x] `WM_MOUSEMOVE` 처리 (드래그 추적) ✅
+  - [x] `WM_LBUTTONDOWN/UP`, `WM_RBUTTONDOWN/UP`, `WM_MBUTTONDOWN/UP` 처리 ✅
   - [ ] 키보드 대안 (`Ctrl + LeftClick`) 지원 (선택 사항)
 
-- [ ] **GlobalHookService 구현**
-  - [ ] `Services/Interfaces/IGlobalHookService.cs` 생성
-  - [ ] `Services/Implementations/GlobalHookService.cs` 구현
-  - [ ] 이벤트 전파 로직 (`MouseDown`, `MouseUp`, `MouseMove`)
-  - [ ] `MainViewModel`에 이벤트 구독 연결
-  - [ ] `IDisposable` 구현 (Hook 해제)
+- [x] **GlobalHookService 구현** ✅
+  - [x] `Services/Interfaces/IGlobalHookService.cs` 생성 ✅
+  - [x] `Services/Implementations/GlobalHookService.cs` 구현 ✅
+  - [x] 이벤트 전파 로직 (`MouseAction` 이벤트) ✅
+  - [x] `MouseActionEventArgs`, `MouseActionType`, `MouseButton` 정의 ✅
+  - [x] 비동기 이벤트 처리 (`Task.Run`으로 경량화) ✅
+  - [x] `IDisposable` 구현 (Hook 해제) ✅
+  - [x] `App.xaml.cs`에서 싱글톤 등록 및 `Start()` 호출 ✅
+  - [x] `OnExit`에서 `Stop()` 호출하여 리소스 해제 보장 ✅
+  - [ ] `MainViewModel`에 이벤트 구독 연결 (Phase 1.3 예정)
 
 #### Phase 1.3: 시각적 피드백 (Overlay View)
 - [ ] **OverlayWindow 구현**
@@ -218,4 +237,4 @@
 
 ---
 
-**마지막 업데이트**: 2026-02-05 (Phase 1.1 완료 - UX 피드백 및 검증 기능 추가 완료)
+**마지막 업데이트**: 2026-02-05 (Phase 1.2 완료 - 전역 마우스 훅 구현 완료)

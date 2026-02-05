@@ -93,9 +93,11 @@ sequenceDiagram
     App->>Tray: TaskbarIcon 표시 ✅
     Tray->>Tray: ContextMenu 설정 (설정, 종료) ✅
     
-    Note over App,VM: 앱이 백그라운드에서 대기 상태 (Idle) ✅
+    App->>Hook: GlobalHookService.Start() 호출 ✅
+    Hook->>Hook: SetWindowsHookEx(WH_MOUSE_LL) ✅
     
-    Note over Hook: (Phase 1.2에서 GlobalHookService 시작 예정)
+    Note over App,VM: 앱이 백그라운드에서 대기 상태 (Idle) ✅
+    Note over Hook: 전역 마우스 훅 활성화 완료 ✅
 ```
 
 ---
@@ -189,7 +191,9 @@ MessageBox.Show("AI Mouse가 백그라운드에서 실행되었습니다.\n트�
 - ✅ `MainViewModel` 클래스 생성 완료 (`CommunityToolkit.Mvvm` 사용)
 - ✅ 시스템 트레이 아이콘 구현 완료 (`TaskbarIcon` 리소스)
 - ✅ UX 피드백 구현 완료 (`MessageBox` 검증 메시지, `Settings_Click`, `Exit_Click` 이벤트 핸들러)
-- ⏳ 서비스 인터페이스 등록은 Phase 1.2에서 진행 예정
+- ✅ `IGlobalHookService` 싱글톤 등록 완료 (Phase 1.2)
+- ✅ `GlobalHookService` 구현 완료 (Phase 1.2)
+- ✅ 전역 마우스 훅 시작 로직 구현 완료 (Phase 1.2)
 
 ---
 
@@ -246,15 +250,13 @@ stateDiagram-v2
 
 ## 4. 🔌 Service Interfaces (서비스 인터페이스)
 
-### 4.1. IGlobalHookService
+### 4.1. IGlobalHookService ✅ 구현 완료
 전역 마우스/키보드 이벤트를 감지합니다.
 
 ```csharp
 public interface IGlobalHookService : IDisposable
 {
-    event EventHandler<MouseEventArgs>? MouseDown;
-    event EventHandler<MouseEventArgs>? MouseUp;
-    event EventHandler<MouseEventArgs>? MouseMove;
+    event EventHandler<MouseActionEventArgs>? MouseAction;
     
     void Start();
     void Stop();
@@ -263,9 +265,12 @@ public interface IGlobalHookService : IDisposable
 ```
 
 **구현 세부사항:**
-- `SetWindowsHookEx(WH_MOUSE_LL)` 사용
-- `LowLevelMouseProc` 콜백에서 이벤트 필터링
-- **경량화:** 콜백은 즉시 리턴하고, 이벤트는 `Task.Run`으로 비동기 전파
+- `SetWindowsHookEx(WH_MOUSE_LL)` 사용 ✅
+- `LowLevelMouseProc` 콜백에서 이벤트 필터링 ✅
+- **경량화:** 콜백은 즉시 리턴하고, 이벤트는 `Task.Run`으로 비동기 전파 ✅
+- `MouseActionEventArgs`에 액션 타입(Move/Down/Up), 좌표, 버튼 정보 포함 ✅
+- `NativeMethods.cs`에 Win32 API P/Invoke 선언 완료 ✅
+- `Dispose()` 패턴으로 훅 해제 보장 ✅
 
 ### 4.2. IScreenCaptureService
 지정된 화면 영역을 이미지로 캡처합니다.
@@ -383,6 +388,10 @@ GeminiService.SendMultimodalQueryAsync(image, audioPath, prompt)
 ```csharp
 protected override void OnExit(ExitEventArgs e)
 {
+    // GlobalHookService 중지 (훅 해제)
+    var hookService = _serviceProvider?.GetService<IGlobalHookService>();
+    hookService?.Stop();
+    
     // ServiceProvider에서 모든 IDisposable 서비스 해제
     _serviceProvider?.Dispose();
     base.OnExit(e);
@@ -439,4 +448,4 @@ protected override void OnExit(ExitEventArgs e)
 ---
 
 **Last Updated:** 2026-02-05  
-**Version:** 1.3 (Phase 1.1 완료 - UX 피드백 및 검증 기능 추가 완료)
+**Version:** 1.4 (Phase 1.2 완료 - 전역 마우스 훅 구현 완료)
