@@ -67,6 +67,33 @@ AI_Mouse/
 
 ## 📅 4. Development Log (개발 기록)
 
+### 2026-02-05 (목) - NuGet 패키지 설치 및 MainWindow 위치 조정 (4차)
+**[목표]** 필수 NuGet 패키지를 설치하고, `MainWindow`를 `Views` 폴더로 이동하여 MVVM 패턴에 맞는 기본 구조를 완성.
+
+#### Dev Action (NuGet & Refactoring)
+- **NuGet 패키지 설치:**
+  - `CommunityToolkit.Mvvm`
+  - `Microsoft.Extensions.DependencyInjection`
+  - `Hardcodet.NotifyIcon.Wpf` 추가
+- **파일 이동 및 네임스페이스 수정:**
+  - `MainWindow.xaml`, `MainWindow.xaml.cs` -> `Views/` 폴더로 이동
+  - `MainWindow`의 네임스페이스를 `AI_Mouse.Views`로 수정
+  - `App.xaml`의 `StartupUri`를 `Views/MainWindow.xaml`로 업데이트
+- **ViewModel 생성:**
+  - `ViewModels/MainViewModel.cs` 생성 (ObservableObject 상속)
+
+#### Tech Details
+- **WPF 프로젝트 구성:** .NET 8.0 기반의 `AI_Mouse.csproj` 파일 생성 및 패키지 참조 추가
+- **MVVM 패턴 준수:** View와 ViewModel의 역할을 분리하고 폴더 구조에 맞게 네임스페이스 정렬
+
+#### Current Status
+- 패키지 설치 및 파일 이동 완료
+- 프로젝트 기본 골격 및 MVVM 구조 확보
+- (주의) 시스템에 .NET SDK가 설치되어 있지 않아 빌드 확인은 수동 진행 필요
+- 다음 단계: DI 컨테이너 구성 및 트레이 아이콘 기능 구현
+
+---
+
 ### 2026-02-05 (목) - 프로젝트 폴더 구조 생성 (3차)
 **[목표]** MVVM 패턴에 따른 프로젝트 폴더 구조를 생성하여 코드 조직화의 기반을 마련.
 
