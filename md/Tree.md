@@ -23,8 +23,8 @@ AI_Mouse/
 │   ├── OverlayWindow.xaml            # [Phase 1.3] 화면 캡처 오버레이 ✅ 생성됨
 │   └── OverlayWindow.xaml.cs          # [Phase 1.3] OverlayWindow Code-behind ✅ 생성됨
 │   │
-│   ├── ResultWindow.xaml                # [Phase 4.1] AI 응답 표시 창 ✅ 생성됨
-│   └── ResultWindow.xaml.cs             # [Phase 4.1] ResultWindow Code-behind ✅ 생성됨
+│   ├── ResultWindow.xaml                # [Phase 4.1] AI 응답 표시 창 ✅ 생성됨 (드래그 이동, 스크롤 UX 개선 완료, 17차)
+│   └── ResultWindow.xaml.cs             # [Phase 4.1] ResultWindow Code-behind ✅ 생성됨 (DragMove 구현 완료, 17차)
 │   │
 │   └── [Phase 4.2 예정]
 │       ├── SettingsWindow.xaml       # 설정 창
@@ -403,4 +403,4 @@ graph LR
 ---
 
 **Last Updated:** 2026-02-05  
-**Version:** 2.2 (Gemini 모델 ID 변경 및 URL 동적 생성 로직 개선 완료)
+**Version:** 2.3 (ResultWindow 드래그 이동 및 스크롤 UX 개선 완료)

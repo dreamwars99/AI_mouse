@@ -56,6 +56,17 @@ namespace AI_Mouse.Views
         }
 
         /// <summary>
+        /// 타이틀 바 드래그 이동 이벤트 핸들러
+        /// </summary>
+        private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ButtonState == MouseButtonState.Pressed)
+            {
+                this.DragMove();
+            }
+        }
+
+        /// <summary>
         /// 창이 표시될 때 마우스 커서 근처 또는 우측 하단에 위치시킵니다
         /// </summary>
         protected override void OnSourceInitialized(EventArgs e)

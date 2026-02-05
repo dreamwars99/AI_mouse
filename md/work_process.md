@@ -4,7 +4,7 @@
 - **Role:** Lead Architect & Cursor AI
 - **Framework:** .NET 8 (WPF)
 - **Platform:** Windows 10 / 11 Desktop
-- **Last Updated:** 2026-02-05 (Gemini 모델 ID 변경 및 URL 동적 생성 로직 개선 완료)
+- **Last Updated:** 2026-02-05 (ResultWindow 드래그 이동 및 스크롤 UX 개선 완료, 17차)
 
 ## 📌 1. Development Environment (개발 환경 상세)
 이 프로젝트를 이어받는 AI/개발자는 아래 설정을 필수로 확인해야 합니다.
@@ -87,6 +87,49 @@ AI_Mouse/
 
 
 ****## 📅 4. Development Log (개발 기록)
+
+### 2026-02-05 (목) - ResultWindow UX 개선: 드래그 이동 및 스크롤 기능 강화 (17차)
+**[목표]** 테두리 없는 창(`WindowStyle="None"`)인 **ResultWindow**를 사용자가 마우스로 드래그하여 이동할 수 있도록 기능을 추가하고, 긴 답변이 왔을 때 **마우스 휠 스크롤**이 부드럽게 작동하도록 UI를 개선.
+
+#### Dev Action (ResultWindow Drag & Scroll Enhancement)
+- **Views/ResultWindow.xaml 수정:**
+  - 타이틀 바 `Border`에 `MouseLeftButtonDown="TitleBar_MouseLeftButtonDown"` 이벤트 추가
+  - `MaxHeight`를 `600`에서 `900`으로 증가하여 더 많은 콘텐츠 표시 가능하도록 개선
+  - `ScrollViewer`에 `CanContentScroll="False"` 속성 추가:
+    - 픽셀 단위 스크롤 활성화로 마우스 휠 감도가 시스템 설정과 자연스럽게 동기화
+    - 줄 단위가 아닌 부드러운 스크롤 경험 제공
+  - `ScrollViewer`에 `PanningMode="VerticalOnly"` 속성 추가:
+    - 터치패드/터치스크린에서 세로 스크롤 지원
+  - `VerticalScrollBarVisibility="Auto"` 유지 (내용이 넘칠 때만 스크롤바 표시)
+
+- **Views/ResultWindow.xaml.cs 수정:**
+  - `TitleBar_MouseLeftButtonDown` 이벤트 핸들러 구현:
+    - `MouseButtonEventArgs`의 `ButtonState` 확인
+    - `this.DragMove()` 호출로 윈도우 이동 기능 활성화
+    - 닫기 버튼(✕) 클릭 시 드래그가 발생하지 않도록 보장 (Button이 이벤트를 처리하므로 상위로 전파되지 않음)
+
+- **md/To_do.md 업데이트:**
+  - Phase 4.1 섹션에 "윈도우 드래그 이동 기능 구현 완료 (DragMove)" 항목 추가 및 완료 처리
+  - Phase 4.1 섹션에 "결과창 스크롤 UX 개선 완료 (휠 지원 및 픽셀 단위 스크롤, MaxHeight 900)" 항목 추가 및 완료 처리
+
+#### Tech Details
+- **드래그 이동:** WPF의 `DragMove()` 메서드를 사용하여 테두리 없는 창 이동 구현
+- **픽셀 단위 스크롤:** `CanContentScroll="False"`로 설정하여 부드러운 스크롤 경험 제공
+- **이벤트 처리:** 타이틀 바 영역에만 드래그 이벤트를 연결하여 텍스트 선택 방해 방지
+- **터치 지원:** `PanningMode="VerticalOnly"`로 터치 디바이스 지원
+- **높이 제한 완화:** `MaxHeight`를 900으로 증가하여 긴 답변도 더 많이 표시 가능
+
+#### Current Status
+- ✅ `ResultWindow.xaml`에 타이틀 바 `MouseLeftButtonDown` 이벤트 추가 완료
+- ✅ `ResultWindow.xaml.cs`에 `TitleBar_MouseLeftButtonDown` 핸들러 구현 완료 (`DragMove()` 호출)
+- ✅ `MaxHeight`를 600에서 900으로 증가 완료
+- ✅ `ScrollViewer`에 `CanContentScroll="False"` 추가 완료 (픽셀 단위 스크롤)
+- ✅ `ScrollViewer`에 `PanningMode="VerticalOnly"` 추가 완료 (터치 지원)
+- ✅ `To_do.md`에 완료 항목 추가 완료
+- ✅ Linter 에러 없음 확인 완료
+- ResultWindow 드래그 이동 및 스크롤 UX 개선 완료, 사용자 경험 향상
+
+---
 
 ### 2026-02-05 (목) - Gemini 모델 ID 변경 및 URL 동적 생성 로직 개선 (16차)
 **[목표]** 사용자의 환경에 맞춰 Gemini 모델 ID를 `gemini-1.5-pro`에서 **`gemini-2.5-flash`**로 변경하고, URL 생성 로직을 유연하게 개선하여 향후 모델 변경 시 코드 수정을 최소화.

@@ -173,6 +173,8 @@
 - ✅ 응답 도착 시 ResponseText 업데이트 및 로딩 상태 해제 완료
 - ✅ 오류 메시지도 ResultWindow로 표시하도록 변경 완료
 - ✅ `NativeMethods.cs`에 `GetCursorPos` Win32 API 추가 완료
+- ✅ 윈도우 드래그 이동 기능 구현 완료 (DragMove)
+- ✅ 결과창 스크롤 UX 개선 완료 (휠 지원 및 픽셀 단위 스크롤, MaxHeight 900)
 
 ---
 

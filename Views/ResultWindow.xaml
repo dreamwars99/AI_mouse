@@ -11,7 +11,7 @@
         Topmost="True"
         SizeToContent="Height"
         Width="400"
-        MaxHeight="600"
+        MaxHeight="900"
         ShowInTaskbar="False"
         d:DesignHeight="400" d:DesignWidth="400">
     <Window.Resources>
@@ -43,7 +43,8 @@
             <Border Grid.Row="0" 
                     Background="#2196F3" 
                     CornerRadius="8,8,0,0"
-                    Padding="12,8">
+                    Padding="12,8"
+                    MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -90,6 +91,8 @@
             <ScrollViewer Grid.Row="1" 
                           VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled"
+                          CanContentScroll="False"
+                          PanningMode="VerticalOnly"
                           Padding="16"
                           Background="White">
                 <Grid>
