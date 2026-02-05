@@ -18,6 +18,7 @@ namespace AI_Mouse
     {
         private TaskbarIcon? _trayIcon;
         private ServiceProvider? _serviceProvider;
+        private OverlayWindow? _overlayWindow;
 
         /// <summary>
         /// 애플리케이션 시작 시 DI 컨테이너를 구성하고 MainWindow를 생성합니다.
@@ -33,22 +34,36 @@ namespace AI_Mouse
             services.AddTransient<MainViewModel>();
             services.AddTransient<MainWindow>();
 
-            // 3. GlobalHookService를 싱글톤으로 등록
+            // 3. OverlayViewModel과 OverlayWindow를 AddTransient로 등록
+            services.AddTransient<OverlayViewModel>();
+            services.AddTransient<OverlayWindow>();
+
+            // 4. GlobalHookService를 싱글톤으로 등록
             services.AddSingleton<IGlobalHookService, GlobalHookService>();
 
-            // 4. ServiceProvider 빌드
+            // 5. ServiceProvider 빌드
             _serviceProvider = services.BuildServiceProvider();
 
-            // 5. MainWindow 인스턴스를 DI로 생성
+            // 6. MainWindow 인스턴스를 DI로 생성
             var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
 
-            // 6. MainWindow.DataContext에 MainViewModel 주입
-            mainWindow.DataContext = _serviceProvider.GetRequiredService<MainViewModel>();
+            // 7. MainViewModel을 DI로 생성 (IGlobalHookService 자동 주입)
+            var mainViewModel = _serviceProvider.GetRequiredService<MainViewModel>();
 
-            // 7. MainWindow를 숨김 상태로 유지 (초기 상태)
+            // 8. MainWindow.DataContext에 MainViewModel 설정
+            mainWindow.DataContext = mainViewModel;
+
+            // 9. MainWindow를 숨김 상태로 유지 (초기 상태)
             mainWindow.Hide();
 
-            // 8. 리소스에서 TaskbarIcon을 찾아 _trayIcon 멤버 변수에 할당
+            // 10. OverlayWindow를 미리 생성하되 Hide() 상태로 대기 (반응 속도 최적화)
+            _overlayWindow = _serviceProvider.GetRequiredService<OverlayWindow>();
+            _overlayWindow.Hide();
+
+            // 11. MainViewModel에 OverlayWindow 참조 전달 (Show/Hide를 위해 필요)
+            mainViewModel.SetOverlayWindow(_overlayWindow);
+
+            // 12. 리소스에서 TaskbarIcon을 찾아 _trayIcon 멤버 변수에 할당
             _trayIcon = (TaskbarIcon)FindResource("TrayIcon");
             
             // 빈 아이콘 에러 방지를 위해 System.Drawing.SystemIcons.Application 할당
@@ -57,7 +72,7 @@ namespace AI_Mouse
                 _trayIcon.Icon = SystemIcons.Application;
             }
 
-            // 9. GlobalHookService를 가져와서 훅 시작
+            // 13. GlobalHookService를 가져와서 훅 시작
             var hookService = _serviceProvider.GetRequiredService<IGlobalHookService>();
             hookService.Start();
 

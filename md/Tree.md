@@ -19,9 +19,8 @@ AI_Mouse/
 │   ├── MainWindow.xaml           # 메인 윈도우 (초기엔 Hidden 예정)
 │   └── MainWindow.xaml.cs        # MainWindow Code-behind
 │   │
-│   └── [Phase 1.3 예정]
-│       ├── OverlayWindow.xaml        # 화면 캡처 오버레이
-│       └── OverlayWindow.xaml.cs     # OverlayWindow Code-behind
+│   ├── OverlayWindow.xaml            # [Phase 1.3] 화면 캡처 오버레이 ✅ 생성됨
+│   └── OverlayWindow.xaml.cs          # [Phase 1.3] OverlayWindow Code-behind ✅ 생성됨
 │   │
 │   └── [Phase 4.1 예정]
 │       ├── ResultWindow.xaml         # AI 응답 표시 창
@@ -34,8 +33,7 @@ AI_Mouse/
 ├── ViewModels/                    # [Logic] View와 데이터 바인딩 ✅ 생성됨
 │   ├── MainViewModel.cs           # 메인 로직 및 커맨드 처리 ✅ 생성됨
 │   │
-│   └── [Phase 1.3 예정]
-│       └── OverlayViewModel.cs       # 오버레이 상태 관리
+│   ├── OverlayViewModel.cs           # [Phase 1.3] 오버레이 상태 관리 ✅ 생성됨
 │   │
 │   └── [Phase 4.1 예정]
 │       └── ResultViewModel.cs        # 결과 표시 로직
@@ -157,6 +155,8 @@ App.xaml.cs (Bootstrapper)
 │   ├── Services 등록:
 │   │   ├── Transient: MainViewModel ✅
 │   │   ├── Transient: MainWindow ✅
+│   │   ├── Transient: OverlayViewModel ✅ (Phase 1.3)
+│   │   ├── Transient: OverlayWindow ✅ (Phase 1.3)
 │   │   └── Singleton: IGlobalHookService → GlobalHookService ✅
 │   │
 │   ├── ServiceProvider 빌드 ✅
@@ -196,18 +196,26 @@ App.xaml.cs (Bootstrapper)
    │   ├── DataContext 설정 ✅
    │   └── Hide() 호출로 숨김 처리 ✅
    │
-   ├── 5. TaskbarIcon 표시 ✅
+   ├── 5. OverlayWindow 생성 (DI) ✅ (Phase 1.3)
+   │   ├── OverlayViewModel 주입 ✅
+   │   ├── DataContext 설정 ✅
+   │   └── Hide() 호출로 대기 상태 유지 ✅
+   │
+   ├── 6. MainViewModel에 OverlayWindow 참조 전달 ✅ (Phase 1.3)
+   │   └── SetOverlayWindow() 호출 ✅
+   │
+   ├── 7. TaskbarIcon 표시 ✅
    │   ├── 시스템 트레이에 아이콘 표시
    │   └── SystemIcons.Application 할당 (빈 아이콘 방지)
    │
-   ├── 6. MessageBox 검증 메시지 출력 ✅
+   ├── 8. MessageBox 검증 메시지 출력 ✅
    │   └── "AI Mouse가 백그라운드에서 실행되었습니다." 안내
    │
-   ├── 7. GlobalHookService 시작 ✅
+   ├── 9. GlobalHookService 시작 ✅
    │   ├── IGlobalHookService 인스턴스 가져오기 (DI)
    │   └── hookService.Start() 호출 (전역 마우스 훅 설치)
    │
-   └── 8. 앱이 백그라운드에서 대기 (Idle 상태) ✅
+   └── 10. 앱이 백그라운드에서 대기 (Idle 상태) ✅
        └── 전역 마우스 훅 활성화 완료 ✅
 ```
 
@@ -218,25 +226,26 @@ App.xaml.cs (Bootstrapper)
    │
    ├── GlobalHookService → MouseDown 이벤트 발생
    │
-   ├── MainViewModel.MouseDown 핸들러
-   │   ├── State = Listening
-   │   ├── OverlayWindow.Show()
-   │   └── AudioRecorderService.StartRecording()
+   ├── MainViewModel.MouseDown 핸들러 ✅ (Phase 1.3)
+   │   ├── 시작점 기록 ✅
+   │   ├── OverlayWindow.Show() ✅
+   │   └── OverlayViewModel.Reset() ✅
    │
    ├── 사용자: 마우스 드래그
-   │   └── GlobalHookService → MouseMove 이벤트
-   │       └── OverlayViewModel.UpdateDragRectangle()
+   │   └── GlobalHookService → MouseMove 이벤트 ✅ (Phase 1.3)
+   │       └── OverlayViewModel.UpdateRect() 호출 ✅
    │
    ├── 사용자: 트리거 버튼 Up
    │   └── GlobalHookService → MouseUp 이벤트
    │
-   └── MainViewModel.MouseUp 핸들러
-       ├── State = Processing
-       ├── OverlayWindow.Hide()
-       ├── ScreenCaptureService.CaptureRegionAsync()
-       ├── AudioRecorderService.StopRecordingAsync()
-       └── GeminiService.SendMultimodalQueryAsync()
-           └── ResultWindow.Show(response)
+   └── MainViewModel.MouseUp 핸들러 ✅ (Phase 1.3)
+       ├── OverlayWindow.Hide() ✅
+       ├── 최종 Rect 로그 출력 (Debug) ✅
+       ├── OverlayViewModel.Reset() ✅
+       ├── ScreenCaptureService.CaptureRegionAsync() (Phase 2.1 예정)
+       ├── AudioRecorderService.StopRecordingAsync() (Phase 2.2 예정)
+       └── GeminiService.SendMultimodalQueryAsync() (Phase 3.1 예정)
+           └── ResultWindow.Show(response) (Phase 4.1 예정)
 ```
 
 ---
@@ -388,4 +397,4 @@ graph LR
 ---
 
 **Last Updated:** 2026-02-05  
-**Version:** 1.4 (Phase 1.2 완료 - 전역 마우스 훅 구현 완료)
+**Version:** 1.5 (Phase 1.3 완료 - 투명 오버레이 윈도우 및 드래그 사각형 시각화 구현 완료)

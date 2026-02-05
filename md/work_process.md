@@ -4,7 +4,7 @@
 - **Role:** Lead Architect & Cursor AI
 - **Framework:** .NET 8 (WPF)
 - **Platform:** Windows 10 / 11 Desktop
-- **Last Updated:** 2026-02-05 (Phase 1.2 완료 - 전역 마우스 훅 구현 완료)
+- **Last Updated:** 2026-02-05 (Phase 1.3 완료 - 투명 오버레이 윈도우 및 드래그 사각형 시각화 구현 완료)
 
 ## 📌 1. Development Environment (개발 환경 상세)
 이 프로젝트를 이어받는 AI/개발자는 아래 설정을 필수로 확인해야 합니다.
@@ -66,6 +66,72 @@ AI_Mouse/
 - `AudioRecorderService`: NAudio 기반 음성 녹음.
 
 ## 📅 4. Development Log (개발 기록)
+
+### 2026-02-05 (목) - Phase 1.3 투명 오버레이 윈도우 및 드래그 사각형 시각화 구현 (9차)
+**[목표]** **투명 오버레이 윈도우(OverlayWindow)**를 구현하고, 전역 마우스 훅(GlobalHookService)과 연동하여 **드래그 시 사각형 영역을 시각적으로 표시**하는 기능을 완성.
+
+#### Dev Action (Overlay Window & Visual Feedback)
+- **ViewModels/OverlayViewModel.cs 생성:**
+  - `ObservableObject` 상속하여 MVVM 패턴 준수
+  - 드래그 영역 속성 구현 (`[ObservableProperty]` 사용):
+    - `Left`, `Top`, `Width`, `Height` (사각형 좌표 및 크기)
+    - `IsVisible` (사각형 표시 여부)
+  - `UpdateRect(Rect rect)` 메서드: 뷰모델 상태를 한 번에 업데이트
+  - `Reset()` 메서드: 드래그 사각형 초기화
+  - DPI 보정 필요성에 대한 한국어 주석 추가 (현재는 1:1 매핑, 향후 DpiHelper 필요)
+
+- **Views/OverlayWindow.xaml 생성:**
+  - 투명 윈도우 속성 설정:
+    - `WindowStyle="None"`, `AllowsTransparency="True"`, `Topmost="True"`
+    - `WindowState="Maximized"`, `ResizeMode="NoResize"`
+    - `ShowInTaskbar="False"`
+    - `Background="#01000000"` (완전 투명이면 클릭을 못 받으므로 1% 불투명도 적용)
+  - Canvas 내부에 빨간색 테두리 반투명 Rectangle 배치
+  - ViewModel 속성과 바인딩 (`Canvas.Left`, `Canvas.Top`, `Width`, `Height`, `Visibility`)
+  - `BooleanToVisibilityConverter` 리소스 참조 (`App.xaml`에 추가)
+
+- **Views/OverlayWindow.xaml.cs 생성:**
+  - 생성자에서 `OverlayViewModel`을 DI로 주입받아 `DataContext` 설정
+  - Code-behind 최소화 (MVVM 패턴 준수)
+
+- **App.xaml.cs 수정:**
+  - `OverlayViewModel`과 `OverlayWindow`를 `AddTransient`로 DI 등록
+  - `OnStartup`에서 `OverlayWindow` 미리 생성 후 `Hide()` 상태로 대기 (반응 속도 최적화)
+  - `MainViewModel`에 `OverlayWindow` 참조 전달 (`SetOverlayWindow` 메서드 호출)
+  - `App.xaml`에 `BooleanToVisibilityConverter` 리소스 추가
+
+- **ViewModels/MainViewModel.cs 구현:**
+  - 생성자에서 `IGlobalHookService` 주입 (DI)
+  - `SetOverlayWindow(OverlayWindow)` 메서드: `OverlayWindow` 참조 및 `OverlayViewModel` 저장
+  - `MouseAction` 이벤트 구독 (`_hookService.MouseAction += OnMouseAction`)
+  - 상태 기계 로직 구현:
+    - **Down (트리거):** 시작점 기록 (`_dragStartX`, `_dragStartY`), `OverlayWindow.Show()`, `OverlayViewModel.Reset()`
+    - **Move (드래그):** 현재 좌표와 시작점으로 `Rect` 계산, `OverlayViewModel.UpdateRect()` 호출
+    - **Up (종료):** `OverlayWindow.Hide()`, 최종 `Rect` 디버그 로그 출력, `OverlayViewModel.Reset()`
+  - UI 스레드에서 실행 보장 (`Application.Current.Dispatcher.Invoke`)
+  - 트리거 버튼(XButton1)만 처리하도록 필터링
+  - 성능 최적화: `MouseMove` 이벤트 처리 로직 경량화
+
+#### Tech Details
+- **투명 오버레이 윈도우:** `AllowsTransparency="True"`와 `Background="#01000000"`을 사용하여 거의 투명하지만 클릭 이벤트를 받을 수 있는 윈도우 구현
+- **MVVM 패턴 준수:** View와 ViewModel 완전 분리, 데이터 바인딩을 통한 상태 관리
+- **성능 최적화:** `OverlayWindow`를 앱 시작 시 미리 생성하여 첫 드래그 시 반응 속도 향상
+- **좌표 변환:** 현재는 1:1 매핑으로 구현, 향후 DPI 보정 필요 시 `DpiHelper` 사용 예정
+- **이벤트 처리:** `GlobalHookService`의 `MouseAction` 이벤트를 구독하여 드래그 상태 관리
+- **UI 스레드 안전성:** 모든 UI 업데이트는 `Dispatcher.Invoke`를 통해 UI 스레드에서 실행 보장
+
+#### Current Status
+- ✅ `OverlayViewModel.cs` 생성 완료 (드래그 영역 속성 및 업데이트 로직)
+- ✅ `OverlayWindow.xaml` 생성 완료 (투명 윈도우, Canvas, Rectangle UI)
+- ✅ `OverlayWindow.xaml.cs` 생성 완료 (Code-behind 최소화)
+- ✅ `App.xaml.cs`에 DI 등록 및 초기화 완료 (`OverlayWindow` 미리 생성)
+- ✅ `MainViewModel`에 이벤트 구독 및 오버레이 제어 로직 구현 완료
+- ✅ 트리거 버튼 Down/Up 시 오버레이 Show/Hide 동작 확인
+- ✅ 드래그 중 사각형 시각화 동작 확인
+- ✅ `BooleanToVisibilityConverter` 리소스 추가 완료
+- Phase 1.3 완전히 완료, 다음 단계: Phase 2.1 화면 캡처 (Screen Capture) 구현 준비
+
+---
 
 ### 2026-02-05 (목) - Phase 1.2 전역 마우스 훅 구현 (8차)
 **[목표]** Windows API(User32.dll)를 사용하여 **전역 마우스 이벤트를 감지하는 시스템(Global Hook)**을 구현하여 앱이 백그라운드에서 마우스 이벤트를 실시간으로 감지할 수 있도록 완성.

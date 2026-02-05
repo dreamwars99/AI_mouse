@@ -194,6 +194,10 @@ MessageBox.Show("AI Mouse가 백그라운드에서 실행되었습니다.\n트�
 - ✅ `IGlobalHookService` 싱글톤 등록 완료 (Phase 1.2)
 - ✅ `GlobalHookService` 구현 완료 (Phase 1.2)
 - ✅ 전역 마우스 훅 시작 로직 구현 완료 (Phase 1.2)
+- ✅ `OverlayViewModel` 및 `OverlayWindow` DI 등록 완료 (Phase 1.3)
+- ✅ 투명 오버레이 윈도우 구현 완료 (Phase 1.3)
+- ✅ 드래그 사각형 시각화 구현 완료 (Phase 1.3)
+- ✅ `MainViewModel`에서 마우스 이벤트 구독 및 오버레이 제어 완료 (Phase 1.3)
 
 ---
 
@@ -448,4 +452,4 @@ protected override void OnExit(ExitEventArgs e)
 ---
 
 **Last Updated:** 2026-02-05  
-**Version:** 1.4 (Phase 1.2 완료 - 전역 마우스 훅 구현 완료)
+**Version:** 1.5 (Phase 1.3 완료 - 투명 오버레이 윈도우 및 드래그 사각형 시각화 구현 완료)

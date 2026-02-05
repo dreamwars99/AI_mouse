@@ -2,7 +2,7 @@
 
 ## 📋 현재 상태 요약 (Current Status Summary)
 
-**프로젝트 상태:** Phase 1.2 완료 ✅ (전역 마우스 훅 구현 완료)
+**프로젝트 상태:** Phase 1.3 완료 ✅ (투명 오버레이 윈도우 및 드래그 사각형 시각화 구현 완료)
 
 **완료된 주요 기능:**
 - ✅ 프로젝트 생성 및 환경 설정 (.NET 8 WPF)
@@ -12,6 +12,8 @@
 - ✅ MVVM 및 DI 컨테이너 구성 완료
 - ✅ 트레이 아이콘 구현 완료
 - ✅ 전역 마우스 훅 구현 완료 (NativeMethods, IGlobalHookService, GlobalHookService)
+- ✅ 투명 오버레이 윈도우 구현 완료 (OverlayWindow, OverlayViewModel)
+- ✅ 드래그 사각형 시각화 구현 완료 (MainViewModel 이벤트 구독 및 오버레이 제어)
 
 ---
 
@@ -84,6 +86,15 @@
 - ✅ `App.xaml.cs`에서 싱글톤 등록 및 `Start()` 호출
 - ✅ `OnExit`에서 `Stop()` 호출하여 훅 해제 보장
 
+### Phase 1.3: 시각적 피드백 (Overlay View) ✅ 완료
+- ✅ `Views/OverlayWindow.xaml` 생성 (투명 윈도우, Canvas, Rectangle UI 구성)
+- ✅ `Views/OverlayWindow.xaml.cs` 생성 (Code-behind 구현)
+- ✅ `ViewModels/OverlayViewModel.cs` 생성 (`ObservableObject` 상속, 드래그 영역 속성 구현)
+- ✅ `App.xaml.cs`에 `OverlayViewModel`과 `OverlayWindow` DI 등록 및 초기화
+- ✅ `MainViewModel`에 `IGlobalHookService`와 `OverlayWindow` 주입 및 이벤트 구독
+- ✅ 트리거 버튼 Down → 오버레이 Show, Up → 오버레이 Hide 로직 구현
+- ✅ 드래그 중 사각형 시각화 로직 구현 (`UpdateRect` 메서드)
+
 ---
 
 ## 🧊 Backlog (예정된 작업)
@@ -115,24 +126,24 @@
   - [x] `IDisposable` 구현 (Hook 해제) ✅
   - [x] `App.xaml.cs`에서 싱글톤 등록 및 `Start()` 호출 ✅
   - [x] `OnExit`에서 `Stop()` 호출하여 리소스 해제 보장 ✅
-  - [ ] `MainViewModel`에 이벤트 구독 연결 (Phase 1.3 예정)
+  - [x] `MainViewModel`에 이벤트 구독 연결 ✅ (Phase 1.3 완료)
 
-#### Phase 1.3: 시각적 피드백 (Overlay View)
-- [ ] **OverlayWindow 구현**
-  - [ ] `Views/OverlayWindow.xaml` 생성
-  - [ ] `WindowStyle="None"`, `AllowsTransparency="True"` 설정
-  - [ ] `Background="#01000000"` (클릭 통과 방지)
-  - [ ] 전체 화면 덮기 로직
+#### Phase 1.3: 시각적 피드백 (Overlay View) ✅ 완료
+- [x] **OverlayWindow 구현** ✅
+  - [x] `Views/OverlayWindow.xaml` 생성 ✅
+  - [x] `WindowStyle="None"`, `AllowsTransparency="True"` 설정 ✅
+  - [x] `Background="#01000000"` (클릭 통과 방지) ✅
+  - [x] 전체 화면 덮기 로직 (`WindowState="Maximized"`) ✅
 
-- [ ] **드래그 사각형 그리기**
-  - [ ] `OverlayViewModel` 생성
-  - [ ] Canvas 또는 Adorner를 이용한 사각형 렌더링
-  - [ ] 마우스 좌표 계산 및 업데이트 로직
+- [x] **드래그 사각형 그리기** ✅
+  - [x] `OverlayViewModel` 생성 ✅
+  - [x] Canvas를 이용한 사각형 렌더링 ✅
+  - [x] 마우스 좌표 계산 및 업데이트 로직 (`UpdateRect` 메서드) ✅
 
-- [ ] **트리거 연결**
-  - [ ] 트리거 버튼 Down → 오버레이 Show
-  - [ ] 트리거 버튼 Up → 오버레이 Hide
-  - [ ] `MainViewModel`에서 상태 관리
+- [x] **트리거 연결** ✅
+  - [x] 트리거 버튼 Down → 오버레이 Show ✅
+  - [x] 트리거 버튼 Up → 오버레이 Hide ✅
+  - [x] `MainViewModel`에서 상태 관리 ✅
 
 ### 🟡 Medium Priority (중간 우선순위)
 
@@ -237,4 +248,4 @@
 
 ---
 
-**마지막 업데이트**: 2026-02-05 (Phase 1.2 완료 - 전역 마우스 훅 구현 완료)
+**마지막 업데이트**: 2026-02-05 (Phase 1.3 완료 - 투명 오버레이 윈도우 및 드래그 사각형 시각화 구현 완료)

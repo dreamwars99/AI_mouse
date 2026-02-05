@@ -5,6 +5,9 @@
              xmlns:tb="http://www.hardcodet.net/taskbar"
              ShutdownMode="OnExplicitShutdown">
     <Application.Resources>
+        <!-- BooleanToVisibilityConverter 리소스 -->
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+
         <!-- 시스템 트레이 아이콘 -->
         <tb:TaskbarIcon x:Key="TrayIcon"
                         ToolTipText="AI Mouse (Running)">
