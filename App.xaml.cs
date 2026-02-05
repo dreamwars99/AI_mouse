@@ -85,29 +85,32 @@ namespace AI_Mouse
             // 10. GeminiService를 싱글톤으로 등록 (HttpClient 주입)
             services.AddSingleton<IGeminiService, GeminiService>();
 
-            // 11. ServiceProvider 빌드
+            // 11. SettingsService를 싱글톤으로 등록
+            services.AddSingleton<ISettingsService, SettingsService>();
+
+            // 12. ServiceProvider 빌드
             _serviceProvider = services.BuildServiceProvider();
 
-            // 11. MainWindow 인스턴스를 DI로 생성
+            // 13. MainWindow 인스턴스를 DI로 생성
             var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
 
-            // 12. MainViewModel을 DI로 생성 (IGlobalHookService, IScreenCaptureService, IAudioRecorderService, IGeminiService 자동 주입)
+            // 14. MainViewModel을 DI로 생성 (IGlobalHookService, IScreenCaptureService, IAudioRecorderService, IGeminiService, ISettingsService 자동 주입)
             var mainViewModel = _serviceProvider.GetRequiredService<MainViewModel>();
 
-            // 13. MainWindow.DataContext에 MainViewModel 설정
+            // 15. MainWindow.DataContext에 MainViewModel 설정
             mainWindow.DataContext = mainViewModel;
 
-            // 14. MainWindow를 숨김 상태로 유지 (초기 상태)
+            // 16. MainWindow를 숨김 상태로 유지 (초기 상태)
             mainWindow.Hide();
 
-            // 15. OverlayWindow를 미리 생성하되 Hide() 상태로 대기 (반응 속도 최적화)
+            // 17. OverlayWindow를 미리 생성하되 Hide() 상태로 대기 (반응 속도 최적화)
             _overlayWindow = _serviceProvider.GetRequiredService<OverlayWindow>();
             _overlayWindow.Hide();
 
-            // 16. MainViewModel에 OverlayWindow 참조 전달 (Show/Hide를 위해 필요)
+            // 18. MainViewModel에 OverlayWindow 참조 전달 (Show/Hide를 위해 필요)
             mainViewModel.SetOverlayWindow(_overlayWindow);
 
-            // 17. 리소스에서 TaskbarIcon을 찾아 _trayIcon 멤버 변수에 할당
+            // 19. 리소스에서 TaskbarIcon을 찾아 _trayIcon 멤버 변수에 할당
             _trayIcon = (TaskbarIcon)FindResource("TrayIcon");
             
             // 빈 아이콘 에러 방지를 위해 System.Drawing.SystemIcons.Application 할당
@@ -116,9 +119,8 @@ namespace AI_Mouse
                 _trayIcon.Icon = SystemIcons.Application;
             }
 
-            // 18. GlobalHookService를 가져와서 기본 트리거 설정 및 훅 시작
+            // 20. GlobalHookService를 가져와서 훅 시작 (트리거 설정은 MainViewModel 생성자에서 로드됨)
             var hookService = _serviceProvider.GetRequiredService<IGlobalHookService>();
-            hookService.CurrentTrigger = Models.TriggerButton.XButton1; // 기본값: XButton1 (뒤로 가기)
             hookService.Start();
 
             // 검증: 앱 실행 확인용 메시지 박스 출력
@@ -136,6 +138,20 @@ namespace AI_Mouse
         {
             try
             {
+                // 설정 저장 (MainViewModel에서 현재 설정 저장)
+                if (_serviceProvider != null)
+                {
+                    try
+                    {
+                        var mainViewModel = _serviceProvider.GetService<MainViewModel>();
+                        mainViewModel?.SaveSettings();
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Error("설정 저장 중 오류", ex);
+                    }
+                }
+
                 // GlobalHookService 중지 (훅 해제)
                 if (_serviceProvider != null)
                 {

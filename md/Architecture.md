@@ -202,6 +202,7 @@ MessageBox.Show("AI Mouse가 백그라운드에서 실행되었습니다.\n트�
 - ✅ `IGlobalHookService` 싱글톤 등록 완료 (Phase 1.2)
 - ✅ `GlobalHookService` 구현 완료 (Phase 1.2)
 - ✅ 전역 마우스 훅 시작 로직 구현 완료 (Phase 1.2)
+- ✅ 키보드 훅 추가 및 ESC 취소 기능 구현 완료 (Phase 4.4)
 - ✅ `OverlayViewModel` 및 `OverlayWindow` DI 등록 완료 (Phase 1.3)
 - ✅ 투명 오버레이 윈도우 구현 완료 (Phase 1.3)
 - ✅ 드래그 사각형 시각화 구현 완료 (Phase 1.3)
@@ -227,11 +228,16 @@ MessageBox.Show("AI Mouse가 백그라운드에서 실행되었습니다.\n트�
 - ✅ `SettingsViewModel` 및 `SettingsWindow` 구현 완료 (Phase 4.2)
 - ✅ 트리거 버튼 동적 변경 기능 구현 완료 (Phase 4.2)
 - ✅ API Key 설정 및 임시 폴더 열기 기능 구현 완료 (Phase 4.2)
+- ✅ `ISettingsService` 및 `SettingsService` 구현 완료 (Phase 4.4)
+- ✅ 설정 영구 저장 시스템 구현 완료 (JSON 파일 기반, Phase 4.4)
 - ✅ `Logger` 유틸리티 구현 완료 (Phase 4.3)
 - ✅ 파일 로깅 시스템 구현 완료 (Phase 4.3)
 - ✅ 전역 예외 처리 구현 완료 (Phase 4.3)
 - ✅ `GlobalHookService` 예외 처리 안전장치 추가 완료 (Phase 4.3)
 - ✅ `SettingsWindow.xaml.cs`의 CS8602 경고 해결 완료 (null 체크 추가, 22차)
+- ✅ `AppConfig` 모델 및 `ISettingsService` 구현 완료 (Phase 4.4)
+- ✅ 설정 영구 저장 시스템 구현 완료 (JSON 파일 기반, Phase 4.4)
+- ✅ 키보드 훅 추가 및 ESC 취소 기능 구현 완료 (Phase 4.4)
 
 ---
 
@@ -315,6 +321,8 @@ public interface IGlobalHookService : IDisposable
 - **트리거 동적 변경:** `CurrentTrigger` 속성으로 런타임에 트리거 버튼 변경 가능 ✅ (Phase 4.2)
 - **기본 동작 차단:** 트리거 버튼의 Down/Up 이벤트 감지 시 `return 1`로 이벤트 전파 차단 ✅ (Phase 4.2)
 - **예외 처리 안전장치:** `HookCallback` 내부 모든 예외를 `try-catch`로 감싸고 `Logger.Error`로 기록 ✅ (Phase 4.3)
+- **키보드 훅:** ESC 키 감지 시 `CancellationRequested` 이벤트 발생 ✅ (Phase 4.4)
+- **취소 기능:** 드래그 중 ESC 키로 작업 취소 가능 (오버레이 숨김, 녹음 중지) ✅ (Phase 4.4)
 
 ### 4.2. IScreenCaptureService ✅ 구현 완료
 지정된 화면 영역을 이미지로 캡처합니다.
@@ -493,6 +501,8 @@ protected override void OnExit(ExitEventArgs e)
 - **예외 처리:** 파일 읽기 실패 시 `null` 반환 및 사용자 안내 메시지 표시 ✅
 - **전송:** HTTPS로만 전송 (SDK 내장)
 - **설정 창:** `SettingsWindow`에서 API Key 입력 및 저장 가능 ✅ (Phase 4.2)
+- **설정 영구 저장:** `ISettingsService`를 통해 JSON 파일(`settings.json`)로 설정 저장/로드 ✅ (Phase 4.4)
+- **마이그레이션:** 기존 `apikey.txt` 파일을 자동으로 `settings.json`으로 변환 ✅ (Phase 4.4)
 
 ### 7.2. DPI Awareness ✅ 구현 완료
 
@@ -522,7 +532,8 @@ protected override void OnExit(ExitEventArgs e)
 | **ResultWindow** | 마크다운 렌더링, UI 표시, 드래그 이동, 스크롤, 최소화, 포커스 관리, 휠 이벤트 터널링 | Markdig.Wpf ✅ |
 | **ResultViewModel** | 응답 텍스트 및 로딩 상태 관리 | 없음 (순수 상태) |
 | **SettingsWindow** | 설정 UI 표시, API Key 입력, 트리거 버튼 선택, 임시 폴더 열기 | 없음 (순수 UI) ✅ (Phase 4.2) |
-| **SettingsViewModel** | 설정 상태 관리, API Key 저장, 트리거 버튼 변경 | IGlobalHookService ✅ (Phase 4.2) |
+| **SettingsViewModel** | 설정 상태 관리, API Key 저장, 트리거 버튼 변경 | IGlobalHookService, ISettingsService ✅ (Phase 4.2, 4.4) |
+| **SettingsService** | 설정 영구 저장 및 로드 (JSON 파일) | 없음 (순수 유틸리티) ✅ (Phase 4.4) |
 | **Logger** | 파일 로깅, 예외 기록, 앱 생명주기 추적 | 없음 (순수 유틸리티) ✅ (Phase 4.3) |
 
 ---
@@ -539,4 +550,4 @@ protected override void OnExit(ExitEventArgs e)
 ---
 
 **Last Updated:** 2026-02-05  
-**Version:** 2.8 (빌드 경고 해결 및 코드 정리 완료)
+**Version:** 2.9 (Phase 4.4 완료: 설정 영구 저장 및 ESC 취소 기능 구현 완료)

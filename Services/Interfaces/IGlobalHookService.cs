@@ -14,6 +14,11 @@ namespace AI_Mouse.Services.Interfaces
         event EventHandler<MouseActionEventArgs>? MouseAction;
 
         /// <summary>
+        /// 취소 요청 이벤트 (ESC 키 감지 시 발생)
+        /// </summary>
+        event EventHandler? CancellationRequested;
+
+        /// <summary>
         /// 현재 트리거 버튼 (설정에서 변경 가능)
         /// </summary>
         TriggerButton CurrentTrigger { get; set; }

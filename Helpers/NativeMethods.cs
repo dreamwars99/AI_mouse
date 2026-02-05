@@ -15,12 +15,22 @@ namespace AI_Mouse.Helpers
         public const int WH_MOUSE_LL = 14;
 
         /// <summary>
-        /// Windows Hook 프로시저 델리게이트 타입
+        /// Low-level 키보드 훅 타입 (WH_KEYBOARD_LL = 13)
+        /// </summary>
+        public const int WH_KEYBOARD_LL = 13;
+
+        /// <summary>
+        /// Windows Hook 프로시저 델리게이트 타입 (마우스)
         /// </summary>
         public delegate IntPtr LowLevelMouseProc(int nCode, IntPtr wParam, IntPtr lParam);
 
         /// <summary>
-        /// Windows Hook을 설치합니다.
+        /// Windows Hook 프로시저 델리게이트 타입 (키보드)
+        /// </summary>
+        public delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
+
+        /// <summary>
+        /// Windows Hook을 설치합니다. (마우스)
         /// </summary>
         /// <param name="idHook">훅 타입 (WH_MOUSE_LL 등)</param>
         /// <param name="lpfn">훅 프로시저</param>
@@ -29,6 +39,17 @@ namespace AI_Mouse.Helpers
         /// <returns>훅 핸들</returns>
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         public static extern IntPtr SetWindowsHookEx(int idHook, LowLevelMouseProc lpfn, IntPtr hMod, uint dwThreadId);
+
+        /// <summary>
+        /// Windows Hook을 설치합니다. (키보드)
+        /// </summary>
+        /// <param name="idHook">훅 타입 (WH_KEYBOARD_LL 등)</param>
+        /// <param name="lpfn">훅 프로시저</param>
+        /// <param name="hMod">모듈 핸들</param>
+        /// <param name="dwThreadId">스레드 ID (0이면 전역 훅)</param>
+        /// <returns>훅 핸들</returns>
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        public static extern IntPtr SetWindowsHookEx(int idHook, LowLevelKeyboardProc lpfn, IntPtr hMod, uint dwThreadId);
 
         /// <summary>
         /// Windows Hook을 해제합니다.
@@ -91,6 +112,38 @@ namespace AI_Mouse.Helpers
         }
 
         /// <summary>
+        /// Low-level 키보드 훅 구조체
+        /// </summary>
+        [StructLayout(LayoutKind.Sequential)]
+        public struct KBDLLHOOKSTRUCT
+        {
+            /// <summary>
+            /// 가상 키 코드
+            /// </summary>
+            public uint vkCode;
+
+            /// <summary>
+            /// 스캔 코드
+            /// </summary>
+            public uint scanCode;
+
+            /// <summary>
+            /// 플래그
+            /// </summary>
+            public uint flags;
+
+            /// <summary>
+            /// 타임스탬프
+            /// </summary>
+            public uint time;
+
+            /// <summary>
+            /// 추가 정보
+            /// </summary>
+            public IntPtr dwExtraInfo;
+        }
+
+        /// <summary>
         /// 마우스 메시지 상수
         /// </summary>
         public static class MouseMessages
@@ -105,6 +158,28 @@ namespace AI_Mouse.Helpers
             public const int WM_MOUSEWHEEL = 0x020A;
             public const int WM_XBUTTONDOWN = 0x020B;
             public const int WM_XBUTTONUP = 0x020C;
+        }
+
+        /// <summary>
+        /// 키보드 메시지 상수
+        /// </summary>
+        public static class KeyboardMessages
+        {
+            public const int WM_KEYDOWN = 0x0100;
+            public const int WM_KEYUP = 0x0101;
+            public const int WM_SYSKEYDOWN = 0x0104;
+            public const int WM_SYSKEYUP = 0x0105;
+        }
+
+        /// <summary>
+        /// 가상 키 코드 상수
+        /// </summary>
+        public static class VirtualKeys
+        {
+            /// <summary>
+            /// ESC 키 (VK_ESCAPE = 0x1B)
+            /// </summary>
+            public const uint VK_ESCAPE = 0x1B;
         }
 
         /// <summary>

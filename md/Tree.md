@@ -14,7 +14,8 @@ AI_Mouse/
 ├── App.xaml                       # 애플리케이션 리소스 정의
 ├── AI_Mouse.csproj                # 프로젝트 파일 (.NET 8 WPF)
 ├── AI_Mouse.sln                   # 솔루션 파일
-├── apikey.txt                     # [보안] API Key 파일 (.gitignore에 의해 무시됨) ✅
+├── apikey.txt                     # [보안] API Key 파일 (마이그레이션됨, Phase 4.4) ✅
+├── settings.json                  # [보안] 설정 파일 (JSON, Phase 4.4) ✅
 │
 ├── Views/                         # [UI] XAML 및 Code-behind ✅ 생성됨
 │   ├── MainWindow.xaml           # 메인 윈도우 (초기엔 Hidden 예정)
@@ -36,7 +37,7 @@ AI_Mouse/
 │   │
 │   ├── ResultViewModel.cs               # [Phase 4.1] 결과 표시 로직 ✅ 생성됨
 │   │
-│   └── SettingsViewModel.cs              # [Phase 4.2] 설정 화면 로직 ✅ 생성됨
+│   └── SettingsViewModel.cs              # [Phase 4.2] 설정 화면 로직 ✅ 생성됨 (ISettingsService 사용, Phase 4.4)
 │
 ├── Services/                      # [Core] 비즈니스 로직 및 시스템 제어 ✅ 생성됨
 │   ├── Interfaces/                # 서비스 인터페이스 ✅ 생성됨
@@ -44,6 +45,7 @@ AI_Mouse/
 │   │   ├── IScreenCaptureService.cs       # [Phase 2.1] 화면 캡처 ✅ 생성됨
 │   │   ├── IAudioRecorderService.cs       # [Phase 2.2] 음성 녹음 ✅ 생성됨
 │   │   ├── IGeminiService.cs              # [Phase 3.1] Gemini API ✅ 생성됨
+│   │   ├── ISettingsService.cs            # [Phase 4.4] 설정 영구 저장 ✅ 생성됨
 │   │   └── ITrayService.cs                # 트레이 아이콘 관리 ⏳ 생성 예정
 │   │
 │   └── Implementations/           # 서비스 구현체 ✅ 생성됨
@@ -51,17 +53,19 @@ AI_Mouse/
 │       ├── ScreenCaptureService.cs        # [Phase 2.1] GDI+ 캡처 구현 ✅ 생성됨
 │       ├── AudioRecorderService.cs        # [Phase 2.2] NAudio 녹음 구현 ✅ 생성됨
 │       ├── GeminiService.cs               # [Phase 3.1] HttpClient API 클라이언트 구현 ✅ 생성됨
+│       ├── SettingsService.cs            # [Phase 4.4] 설정 영구 저장 구현 ✅ 생성됨
 │       └── TrayService.cs                 # 트레이 아이콘 구현 ⏳ 생성 예정
 │
 ├── Models/                        # [Data] 데이터 구조 (DTO) ✅ 생성됨
 │   ├── Enums.cs                   # [Phase 4.2] TriggerButton 열거형 ✅ 생성됨
+│   ├── AppConfig.cs               # [Phase 4.4] 앱 설정 모델 (JSON 직렬화용) ✅ 생성됨
 │   ├── AppState.cs                # 앱 상태 (Idle/Listening/Processing/Result)
 │   ├── CaptureData.cs            # [Phase 2.1] 캡처 데이터 모델
 │   ├── AudioData.cs               # [Phase 2.2] 오디오 데이터 모델
 │   └── ApiResponse.cs             # [Phase 3.1] API 응답 모델
 │
 ├── Helpers/                       # [Util] Win32 Interop, 컨버터 등 ✅ 생성됨
-│   ├── NativeMethods.cs           # [Phase 1.2] Win32 P/Invoke 선언 ✅ 생성됨
+│   ├── NativeMethods.cs           # [Phase 1.2] Win32 P/Invoke 선언 ✅ 생성됨 (키보드 훅 추가, Phase 4.4)
 │   ├── DpiHelper.cs               # [Phase 2.1] DPI 좌표 변환 유틸리티 ✅ 생성됨
 │   ├── Logger.cs                  # [Phase 4.3] 파일 로깅 유틸리티 ✅ 생성됨
 │   └── Converters/                # WPF Value Converter
@@ -133,6 +137,7 @@ graph TB
     MainVM -->|의존성 주입| CaptureService
     MainVM -->|의존성 주입| AudioService
     MainVM -->|의존성 주입| GeminiService
+    MainVM -->|의존성 주입| SettingsService ✅ (Phase 4.4)
     MainVM -->|의존성 주입| TrayService
     
     HookService -->|사용| NativeMethods
@@ -164,6 +169,7 @@ App.xaml.cs (Bootstrapper)
 │   │   ├── Transient: SettingsViewModel ✅ (Phase 4.2)
 │   │   ├── Transient: SettingsWindow ✅ (Phase 4.2)
 │   │   ├── Singleton: IGlobalHookService → GlobalHookService ✅
+│   │   ├── Singleton: ISettingsService → SettingsService ✅ (Phase 4.4)
 │   │   ├── Singleton: IScreenCaptureService → ScreenCaptureService ✅ (Phase 2.1)
 │   │   ├── Singleton: IAudioRecorderService → AudioRecorderService ✅ (Phase 2.2)
 │   │   ├── Singleton: HttpClient ✅ (Phase 3.1)
@@ -259,6 +265,15 @@ App.xaml.cs (Bootstrapper)
        ├── GeminiService.GetResponseAsync() ✅ (Phase 3.1)
        ├── ResultWindow.Show() (로딩 상태로 시작) ✅ (Phase 4.1)
        └── ResultWindow.ResponseText 업데이트 ✅ (Phase 4.1)
+   │
+   사용자: ESC 키 입력 (드래그 중) ✅ (Phase 4.4)
+   │
+   └── GlobalHookService → CancellationRequested 이벤트 발생 ✅ (Phase 4.4)
+       └── MainViewModel.OnCancellationRequested 핸들러 ✅ (Phase 4.4)
+           ├── OverlayWindow.Hide() ✅
+           ├── OverlayViewModel.Reset() ✅
+           ├── AudioRecorderService.StopRecordingAsync() (Gemini 요청 없음) ✅
+           └── 상태 리셋 (_isListening = false) ✅
 ```
 
 ---
@@ -290,25 +305,28 @@ namespace AI_Mouse.ViewModels
 
 namespace AI_Mouse.Services.Interfaces
 {
-    public interface IGlobalHookService : IDisposable { }
+    public interface IGlobalHookService : IDisposable { } // ✅ CancellationRequested 이벤트 추가 (Phase 4.4)
     public interface IScreenCaptureService { }
     public interface IAudioRecorderService : IDisposable { }
     public interface IGeminiService { } // ✅ Phase 3.1 완료
+    public interface ISettingsService { } // ✅ Phase 4.4 완료
     public interface ITrayService { }
 }
 
 namespace AI_Mouse.Services.Implementations
 {
-    public class GlobalHookService : IGlobalHookService { }
+    public class GlobalHookService : IGlobalHookService { } // ✅ 키보드 훅 추가 (Phase 4.4)
     public class ScreenCaptureService : IScreenCaptureService { }
     public class AudioRecorderService : IAudioRecorderService { }
     public class GeminiService : IGeminiService { } // ✅ Phase 3.1 완료, 모델 ID: gemini-2.5-flash (16차)
+    public class SettingsService : ISettingsService { } // ✅ Phase 4.4 완료
     public class TrayService : ITrayService { }
 }
 
 namespace AI_Mouse.Models
 {
     public enum TriggerButton { Left, Right, Middle, XButton1, XButton2 } // ✅ Phase 4.2 완료
+    public class AppConfig { } // ✅ Phase 4.4 완료 (ApiKey, TriggerButton)
     public enum AppState { Idle, Listening, Processing, Result }
     public class CaptureData { }
     public class AudioData { }
@@ -317,7 +335,7 @@ namespace AI_Mouse.Models
 
 namespace AI_Mouse.Helpers
 {
-    public static class NativeMethods { }
+    public static class NativeMethods { } // ✅ 키보드 훅 추가 (WH_KEYBOARD_LL, KBDLLHOOKSTRUCT, Phase 4.4)
     public static class DpiHelper { }
     public static class Logger { } // ✅ Phase 4.3 완료
 }
@@ -412,4 +430,4 @@ graph LR
 ---
 
 **Last Updated:** 2026-02-05  
-**Version:** 2.8 (빌드 경고 해결 및 코드 정리 완료)
+**Version:** 2.9 (Phase 4.4 완료: 설정 영구 저장 및 ESC 취소 기능 구현 완료)

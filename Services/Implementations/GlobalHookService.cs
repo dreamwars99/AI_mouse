@@ -14,8 +14,10 @@ namespace AI_Mouse.Services.Implementations
     /// </summary>
     public class GlobalHookService : IGlobalHookService
     {
-        private IntPtr _hookId = IntPtr.Zero;
-        private NativeMethods.LowLevelMouseProc _hookProc;
+        private IntPtr _mouseHookId = IntPtr.Zero;
+        private IntPtr _keyboardHookId = IntPtr.Zero;
+        private NativeMethods.LowLevelMouseProc _mouseHookProc;
+        private NativeMethods.LowLevelKeyboardProc _keyboardHookProc;
         private bool _disposed = false;
         private TriggerButton _currentTrigger = TriggerButton.XButton1; // 기본값: XButton1
         private bool _isDragging = false; // 드래그 중인지 추적
@@ -24,6 +26,11 @@ namespace AI_Mouse.Services.Implementations
         /// 마우스 액션이 발생했을 때 발생하는 이벤트
         /// </summary>
         public event EventHandler<MouseActionEventArgs>? MouseAction;
+
+        /// <summary>
+        /// 취소 요청 이벤트 (ESC 키 감지 시 발생)
+        /// </summary>
+        public event EventHandler? CancellationRequested;
 
         /// <summary>
         /// 현재 트리거 버튼 (설정에서 변경 가능)
@@ -39,16 +46,17 @@ namespace AI_Mouse.Services.Implementations
         }
 
         /// <summary>
-        /// 훅이 활성화되어 있는지 여부
+        /// 훅이 활성화되어 있는지 여부 (마우스 훅 기준)
         /// </summary>
-        public bool IsActive => _hookId != IntPtr.Zero;
+        public bool IsActive => _mouseHookId != IntPtr.Zero;
 
         /// <summary>
         /// 생성자
         /// </summary>
         public GlobalHookService()
         {
-            _hookProc = HookCallback;
+            _mouseHookProc = MouseHookCallback;
+            _keyboardHookProc = KeyboardHookCallback;
         }
 
         /// <summary>
@@ -74,19 +82,33 @@ namespace AI_Mouse.Services.Implementations
                 }
 
                 // Low-level 마우스 훅 설치 (전역 훅: dwThreadId = 0)
-                _hookId = NativeMethods.SetWindowsHookEx(
+                _mouseHookId = NativeMethods.SetWindowsHookEx(
                     NativeMethods.WH_MOUSE_LL,
-                    _hookProc,
+                    _mouseHookProc,
                     moduleHandle,
                     0);
 
-                if (_hookId == IntPtr.Zero)
+                if (_mouseHookId == IntPtr.Zero)
                 {
                     var error = Marshal.GetLastWin32Error();
-                    throw new InvalidOperationException($"훅 설치 실패. Win32 오류 코드: {error}");
+                    throw new InvalidOperationException($"마우스 훅 설치 실패. Win32 오류 코드: {error}");
                 }
 
-                Debug.WriteLine("[GlobalHookService] 전역 마우스 훅이 시작되었습니다.");
+                // Low-level 키보드 훅 설치 (전역 훅: dwThreadId = 0)
+                _keyboardHookId = NativeMethods.SetWindowsHookEx(
+                    NativeMethods.WH_KEYBOARD_LL,
+                    _keyboardHookProc,
+                    moduleHandle,
+                    0);
+
+                if (_keyboardHookId == IntPtr.Zero)
+                {
+                    var error = Marshal.GetLastWin32Error();
+                    Debug.WriteLine($"[GlobalHookService] 키보드 훅 설치 실패. Win32 오류 코드: {error}");
+                    // 키보드 훅 실패해도 마우스 훅은 계속 사용
+                }
+
+                Debug.WriteLine("[GlobalHookService] 전역 마우스 훅 및 키보드 훅이 시작되었습니다.");
             }
             catch (Exception ex)
             {
@@ -108,18 +130,37 @@ namespace AI_Mouse.Services.Implementations
 
             try
             {
-                var result = NativeMethods.UnhookWindowsHookEx(_hookId);
-                if (!result)
+                // 마우스 훅 해제
+                if (_mouseHookId != IntPtr.Zero)
                 {
-                    var error = Marshal.GetLastWin32Error();
-                    Debug.WriteLine($"[GlobalHookService] 훅 해제 실패. Win32 오류 코드: {error}");
-                }
-                else
-                {
-                    Debug.WriteLine("[GlobalHookService] 전역 마우스 훅이 중지되었습니다.");
+                    var result = NativeMethods.UnhookWindowsHookEx(_mouseHookId);
+                    if (!result)
+                    {
+                        var error = Marshal.GetLastWin32Error();
+                        Debug.WriteLine($"[GlobalHookService] 마우스 훅 해제 실패. Win32 오류 코드: {error}");
+                    }
+                    else
+                    {
+                        Debug.WriteLine("[GlobalHookService] 전역 마우스 훅이 중지되었습니다.");
+                    }
+                    _mouseHookId = IntPtr.Zero;
                 }
 
-                _hookId = IntPtr.Zero;
+                // 키보드 훅 해제
+                if (_keyboardHookId != IntPtr.Zero)
+                {
+                    var result = NativeMethods.UnhookWindowsHookEx(_keyboardHookId);
+                    if (!result)
+                    {
+                        var error = Marshal.GetLastWin32Error();
+                        Debug.WriteLine($"[GlobalHookService] 키보드 훅 해제 실패. Win32 오류 코드: {error}");
+                    }
+                    else
+                    {
+                        Debug.WriteLine("[GlobalHookService] 전역 키보드 훅이 중지되었습니다.");
+                    }
+                    _keyboardHookId = IntPtr.Zero;
+                }
             }
             catch (Exception ex)
             {
@@ -128,17 +169,78 @@ namespace AI_Mouse.Services.Implementations
         }
 
         /// <summary>
-        /// 훅 콜백 메서드 (Win32에서 호출)
-        /// 주의: 이 메서드는 최대한 가볍게 작성해야 하며, 무거운 작업은 비동기로 처리해야 합니다.
+        /// 키보드 훅 콜백 메서드 (Win32에서 호출)
+        /// 주의: 이 메서드는 최대한 가볍게 작성해야 하며, ESC 키 외의 키는 즉시 전달해야 합니다.
         /// </summary>
-        private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
+        private IntPtr KeyboardHookCallback(int nCode, IntPtr wParam, IntPtr lParam)
         {
             try
             {
                 // nCode가 0보다 작으면 CallNextHookEx를 호출하고 즉시 반환
                 if (nCode < 0)
                 {
-                    return NativeMethods.CallNextHookEx(_hookId, nCode, wParam, lParam);
+                    return NativeMethods.CallNextHookEx(_keyboardHookId, nCode, wParam, lParam);
+                }
+
+                var message = wParam.ToInt32();
+
+                // WM_KEYDOWN 메시지이고 ESC 키인 경우에만 처리
+                if (message == NativeMethods.KeyboardMessages.WM_KEYDOWN)
+                {
+                    var hookStruct = Marshal.PtrToStructure<NativeMethods.KBDLLHOOKSTRUCT>(lParam);
+                    
+                    if (hookStruct.vkCode == NativeMethods.VirtualKeys.VK_ESCAPE)
+                    {
+                        // 드래그 중일 때만 취소 이벤트 발생
+                        if (_isDragging)
+                        {
+                            // 비동기로 이벤트 전파하여 콜백을 경량화
+                            Task.Run(() =>
+                            {
+                                try
+                                {
+                                    CancellationRequested?.Invoke(this, EventArgs.Empty);
+                                    Debug.WriteLine("[GlobalHookService] ESC 키 감지: 취소 요청 이벤트 발생");
+                                }
+                                catch (Exception ex)
+                                {
+                                    Logger.Error("취소 요청 이벤트 처리 중 오류", ex);
+                                }
+                            });
+                        }
+                    }
+                }
+
+                // ESC 키 외의 다른 키는 즉시 다음 훅으로 전달 (성능 최적화)
+                return NativeMethods.CallNextHookEx(_keyboardHookId, nCode, wParam, lParam);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("KeyboardHookCallback 내부 오류", ex);
+                // 예외 발생 시에도 다음 훅으로 전달하여 시스템 안정성 유지
+                try
+                {
+                    return NativeMethods.CallNextHookEx(_keyboardHookId, nCode, wParam, lParam);
+                }
+                catch
+                {
+                    return IntPtr.Zero;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 마우스 훅 콜백 메서드 (Win32에서 호출)
+        /// 주의: 이 메서드는 최대한 가볍게 작성해야 하며, 무거운 작업은 비동기로 처리해야 합니다.
+        /// </summary>
+        private IntPtr MouseHookCallback(int nCode, IntPtr wParam, IntPtr lParam)
+        {
+            try
+            {
+                // nCode가 0보다 작으면 CallNextHookEx를 호출하고 즉시 반환
+                if (nCode < 0)
+                {
+                    return NativeMethods.CallNextHookEx(_mouseHookId, nCode, wParam, lParam);
                 }
 
                 var message = wParam.ToInt32();
@@ -196,7 +298,7 @@ namespace AI_Mouse.Services.Implementations
                 }
 
                 // 다음 훅으로 전달
-                return NativeMethods.CallNextHookEx(_hookId, nCode, wParam, lParam);
+                return NativeMethods.CallNextHookEx(_mouseHookId, nCode, wParam, lParam);
             }
             catch (Exception ex)
             {
@@ -206,7 +308,7 @@ namespace AI_Mouse.Services.Implementations
                 // 예외 발생 시에도 다음 훅으로 전달하여 시스템 안정성 유지
                 try
                 {
-                    return NativeMethods.CallNextHookEx(_hookId, nCode, wParam, lParam);
+                    return NativeMethods.CallNextHookEx(_mouseHookId, nCode, wParam, lParam);
                 }
                 catch
                 {
@@ -388,7 +490,7 @@ namespace AI_Mouse.Services.Implementations
                 }
 
                 // 훅이 아직 활성화되어 있으면 반드시 해제
-                if (IsActive)
+                if (_mouseHookId != IntPtr.Zero || _keyboardHookId != IntPtr.Zero)
                 {
                     Debug.WriteLine("[GlobalHookService] Dispose에서 훅을 해제합니다.");
                     Stop();

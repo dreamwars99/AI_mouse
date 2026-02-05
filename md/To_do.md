@@ -2,7 +2,7 @@
 
 ## 📋 현재 상태 요약 (Current Status Summary)
 
-**프로젝트 상태:** Phase 4.3 완료 ✅ (파일 로깅 시스템 및 전역 예외 처리 구현 완료, 빌드 경고 해결 완료)
+**프로젝트 상태:** Phase 4.4 완료 ✅ (설정 영구 저장 및 ESC 취소 기능 구현 완료)
 
 **완료된 주요 기능:**
 - ✅ 프로젝트 생성 및 환경 설정 (.NET 8 WPF)
@@ -320,6 +320,30 @@
   - [x] `OnExit`에서 리소스 정리 및 로그 기록 완료
   - [x] 모든 정리 작업에 예외 처리 추가 완료
 
+#### Phase 4.4: 설정 영구 저장 및 ESC 취소 기능 ✅ 완료
+- [x] **설정 영구 저장 (JSON)** ✅
+  - [x] `Models/AppConfig.cs` 생성 완료 (ApiKey, TriggerButton 속성)
+  - [x] `ISettingsService` 인터페이스 생성 완료
+  - [x] `SettingsService` 구현 완료 (JSON 직렬화, Newtonsoft.Json 사용)
+  - [x] `settings.json` 파일로 설정 저장/로드 완료
+  - [x] `apikey.txt` 마이그레이션 로직 구현 완료 (기존 파일 자동 변환 후 삭제)
+  - [x] `MainViewModel` 생성자에서 저장된 설정 로드 및 트리거 적용 완료
+  - [x] `SettingsViewModel`을 `ISettingsService` 사용하도록 수정 완료
+  - [x] `App.xaml.cs`에 `SettingsService` 싱글톤 등록 완료
+  - [x] 앱 종료 시 설정 저장 로직 추가 완료 (`OnExit`에서 `MainViewModel.SaveSettings()` 호출)
+
+- [x] **ESC 취소 기능 (Keyboard Hook)** ✅
+  - [x] `NativeMethods`에 키보드 훅 관련 상수 추가 완료 (`WH_KEYBOARD_LL = 13`)
+  - [x] `KBDLLHOOKSTRUCT` 구조체 정의 완료
+  - [x] `VirtualKeys.VK_ESCAPE = 0x1B` 상수 정의 완료
+  - [x] `LowLevelKeyboardProc` 델리게이트 추가 완료
+  - [x] `IGlobalHookService`에 `CancellationRequested` 이벤트 추가 완료
+  - [x] `GlobalHookService`에 키보드 훅 설치 로직 추가 완료 (마우스 훅과 함께 시작)
+  - [x] `KeyboardHookCallback` 구현 완료 (ESC 키 감지 시 이벤트 발생, 다른 키는 즉시 전달)
+  - [x] `MainViewModel`에 취소 핸들러 구현 완료 (`OnCancellationRequested`)
+  - [x] 드래그 중 ESC 키 감지 시 오버레이 숨김, 녹음 중지, 상태 리셋 완료
+  - [x] 키보드 훅 최적화 완료 (ESC 키 외의 키는 즉시 `CallNextHookEx`로 전달)
+
 - [ ] **Release 빌드 최적화** (향후 작업)
   - [ ] 설치 파일 생성 (MSI 또는 ClickOnce)
   - [ ] 코드 서명 (선택 사항)
@@ -351,4 +375,4 @@
 
 ---
 
-**마지막 업데이트**: 2026-02-05 (빌드 경고 해결 및 코드 정리 완료, 22차)
+**마지막 업데이트**: 2026-02-05 (Phase 4.4 완료: 설정 영구 저장 및 ESC 취소 기능 구현 완료, 23차)

@@ -4,7 +4,7 @@
 - **Role:** Lead Architect & Cursor AI
 - **Framework:** .NET 8 (WPF)
 - **Platform:** Windows 10 / 11 Desktop
-- **Last Updated:** 2026-02-05 (빌드 경고 해결 및 코드 정리, 22차)
+- **Last Updated:** 2026-02-05 (Phase 4.4 완료: 설정 영구 저장 및 ESC 취소 기능 구현, 23차)
 
 ## 📌 1. Development Environment (개발 환경 상세)
 이 프로젝트를 이어받는 AI/개발자는 아래 설정을 필수로 확인해야 합니다.
@@ -87,6 +87,92 @@ AI_Mouse/
 
 
 ## 📅 4. Development Log (개발 기록)
+
+### 2026-02-05 (목) - Phase 4.4 완료: 설정 영구 저장 및 ESC 취소 기능 구현 (23차)
+**[목표]** **Phase 4.4**를 수행한다. 앱 설정을 JSON 파일로 영구 저장하는 **설정 지속성(Persistence)** 시스템을 구축하고, 드래그 중 **ESC 키**를 눌러 작업을 취소하는 기능을 구현한다.
+
+#### Dev Action (Settings Persistence & ESC Cancellation)
+- **Models/AppConfig.cs 생성:**
+  - `ApiKey` 속성 (string, 기본값 빈 문자열)
+  - `TriggerButton` 속성 (TriggerButton Enum, 기본값 XButton1)
+  - JSON 직렬화를 위한 모델 클래스
+
+- **ISettingsService 인터페이스 및 SettingsService 구현:**
+  - `Load()`: `settings.json`이 있으면 로드, 없으면 기본값 반환
+  - `apikey.txt` 마이그레이션 로직: 기존 파일이 있으면 읽어서 `settings.json`으로 변환 후 삭제
+  - `Save(AppConfig config)`: JSON 직렬화하여 `settings.json`에 저장 (Newtonsoft.Json 사용)
+  - 파일 경로: `AppDomain.CurrentDomain.BaseDirectory/settings.json`
+
+- **NativeMethods에 키보드 훅 관련 코드 추가:**
+  - `WH_KEYBOARD_LL = 13` 상수 추가
+  - `KBDLLHOOKSTRUCT` 구조체 정의 (vkCode, scanCode, flags, time, dwExtraInfo)
+  - `VirtualKeys.VK_ESCAPE = 0x1B` 상수 정의
+  - `LowLevelKeyboardProc` 델리게이트 추가
+  - `KeyboardMessages` 클래스 추가 (WM_KEYDOWN, WM_KEYUP 등)
+  - `SetWindowsHookEx` 오버로드 추가 (키보드 훅용)
+
+- **IGlobalHookService 인터페이스 수정:**
+  - `CancellationRequested` 이벤트 추가 (`event EventHandler? CancellationRequested;`)
+
+- **GlobalHookService에 키보드 훅 추가:**
+  - `_keyboardHookId` 필드 추가
+  - `_keyboardHookProc` 델리게이트 필드 추가
+  - `Start()` 메서드에서 마우스 훅과 함께 키보드 훅도 설치
+  - `KeyboardHookCallback` 메서드 구현:
+    - `WM_KEYDOWN` 메시지이고 `VK_ESCAPE` 키인 경우에만 처리
+    - 드래그 중(`_isDragging`)일 때만 `CancellationRequested` 이벤트 발생
+    - ESC 키 외의 다른 키는 즉시 `CallNextHookEx`로 전달 (성능 최적화)
+  - `Stop()` 메서드에서 키보드 훅도 해제
+  - `Dispose()` 메서드에서 키보드 훅 해제 확인
+
+- **MainViewModel 수정:**
+  - 생성자에 `ISettingsService` 주입 추가
+  - 생성자에서 `SettingsService.Load()`로 저장된 설정 로드
+  - 저장된 `TriggerButton` 설정을 `GlobalHookService.CurrentTrigger`에 적용
+  - `CancellationRequested` 이벤트 구독 추가
+  - `OnCancellationRequested` 핸들러 구현:
+    - `_isListening` 상태 확인
+    - OverlayWindow 숨김 (`Hide()`)
+    - 사각형 초기화 (`Reset()`)
+    - 오디오 녹음 중지 (`StopRecordingAsync()`, Gemini 요청은 보내지 않음)
+    - 상태 리셋 (`_isListening = false`, 좌표 초기화)
+  - `HandleMouseDown`에서 `_isListening = true` 설정
+  - `HandleMouseUp`에서 `_isListening = false` 설정
+  - `LoadApiKey()` 메서드 제거, `SettingsService.Load()` 사용하도록 변경
+  - `SaveSettings()` 메서드 추가: 현재 설정을 `SettingsService.Save()`로 저장
+  - API Key 로드 시 `SettingsService` 사용하도록 변경
+
+- **SettingsViewModel 수정:**
+  - 생성자에 `ISettingsService` 주입 추가
+  - `LoadSettings()` 메서드: `SettingsService.Load()` 사용, 파일 직접 접근 제거
+  - `Save()` 메서드: `SettingsService.Save()` 사용, `apikey.txt` 직접 저장 제거
+  - `AppConfig` 객체 생성하여 저장
+
+- **App.xaml.cs 수정:**
+  - `ISettingsService` 싱글톤 등록 추가
+  - 기본 트리거 설정 코드 제거 (MainViewModel 생성자에서 로드하므로)
+  - `OnExit`에서 `MainViewModel.SaveSettings()` 호출 추가 (앱 종료 시 설정 저장)
+
+#### Tech Details
+- **설정 지속성:** JSON 파일 기반 설정 저장/로드로 앱 재시작 시 설정 유지
+- **마이그레이션:** 기존 `apikey.txt` 파일을 자동으로 `settings.json`으로 변환
+- **키보드 훅 최적화:** ESC 키 외의 키는 즉시 전달하여 시스템 성능 저하 방지
+- **취소 로직:** 드래그 중 ESC 키로 작업 취소 가능 (오버레이 숨김, 녹음 중지, 상태 리셋)
+- **설정 자동 저장:** 앱 종료 시 현재 설정 자동 저장
+
+#### Current Status
+- ✅ `Models/AppConfig.cs` 생성 완료
+- ✅ `ISettingsService` 인터페이스 및 `SettingsService` 구현 완료
+- ✅ `NativeMethods`에 키보드 훅 관련 코드 추가 완료
+- ✅ `IGlobalHookService`에 `CancellationRequested` 이벤트 추가 완료
+- ✅ `GlobalHookService`에 키보드 훅 추가 완료
+- ✅ `MainViewModel`에 취소 로직 및 설정 로드/저장 추가 완료
+- ✅ `SettingsViewModel`을 `ISettingsService` 사용하도록 수정 완료
+- ✅ `App.xaml.cs`에 `SettingsService` 등록 및 설정 저장 로직 추가 완료
+- ✅ 빌드 성공 (경고 0개, 오류 0개)
+- Phase 4.4 완료, 설정 영구 저장 및 ESC 취소 기능 구현 완료
+
+---
 
 ### 2026-02-05 (목) - 빌드 경고 해결 및 코드 정리 (22차)
 **[목표]** 빌드 경고(CS8602)를 해결하고, 앱 실행 시 시작 알림 팝업이 두 번 뜨는 버그를 수정한다.

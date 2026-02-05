@@ -22,12 +22,14 @@ namespace AI_Mouse.ViewModels
         private readonly IAudioRecorderService _audioService;
         private readonly IGeminiService _geminiService;
         private readonly IServiceProvider _serviceProvider;
+        private readonly ISettingsService _settingsService;
         private OverlayWindow? _overlayWindow;
         private OverlayViewModel? _overlayViewModel;
 
         // 드래그 시작점 좌표 (화면 좌표계 - 물리 좌표)
         private int _dragStartX;
         private int _dragStartY;
+        private bool _isListening = false; // 드래그 중인지 추적 (취소 로직용)
 
         /// <summary>
         /// MainViewModel 생성자
@@ -37,16 +39,26 @@ namespace AI_Mouse.ViewModels
         /// <param name="audioService">오디오 녹음 서비스 (DI 주입)</param>
         /// <param name="geminiService">Gemini API 서비스 (DI 주입)</param>
         /// <param name="serviceProvider">서비스 프로바이더 (DI 주입)</param>
-        public MainViewModel(IGlobalHookService hookService, IScreenCaptureService captureService, IAudioRecorderService audioService, IGeminiService geminiService, IServiceProvider serviceProvider)
+        /// <param name="settingsService">설정 서비스 (DI 주입)</param>
+        public MainViewModel(IGlobalHookService hookService, IScreenCaptureService captureService, IAudioRecorderService audioService, IGeminiService geminiService, IServiceProvider serviceProvider, ISettingsService settingsService)
         {
             _hookService = hookService ?? throw new ArgumentNullException(nameof(hookService));
             _captureService = captureService ?? throw new ArgumentNullException(nameof(captureService));
             _audioService = audioService ?? throw new ArgumentNullException(nameof(audioService));
             _geminiService = geminiService ?? throw new ArgumentNullException(nameof(geminiService));
             _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+            _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
+
+            // 저장된 설정 로드 및 트리거 설정 적용
+            var config = _settingsService.Load();
+            _hookService.CurrentTrigger = config.TriggerButton;
+            Debug.WriteLine($"[MainViewModel] 저장된 설정 로드 완료: TriggerButton={config.TriggerButton}");
 
             // 마우스 액션 이벤트 구독
             _hookService.MouseAction += OnMouseAction;
+
+            // 취소 요청 이벤트 구독 (ESC 키 감지)
+            _hookService.CancellationRequested += OnCancellationRequested;
         }
 
         /// <summary>
@@ -110,6 +122,56 @@ namespace AI_Mouse.ViewModels
         }
 
         /// <summary>
+        /// 취소 요청 이벤트 핸들러 (ESC 키 감지 시 호출)
+        /// </summary>
+        private void OnCancellationRequested(object? sender, EventArgs e)
+        {
+            // UI 스레드에서 실행되도록 보장
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                try
+                {
+                    if (_isListening)
+                    {
+                        Debug.WriteLine("[MainViewModel] ESC 키 감지: 작업 취소");
+
+                        // OverlayWindow 숨김
+                        if (_overlayWindow != null)
+                        {
+                            _overlayWindow.Hide();
+                        }
+
+                        // 사각형 초기화
+                        if (_overlayViewModel != null)
+                        {
+                            _overlayViewModel.Reset();
+                        }
+
+                        // 오디오 녹음 중지 (Gemini 요청은 보내지 않음)
+                        try
+                        {
+                            _audioService.StopRecordingAsync();
+                            Debug.WriteLine("[MainViewModel] 오디오 녹음 중지 완료 (취소)");
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"[MainViewModel] 오디오 녹음 중지 중 오류: {ex.Message}");
+                        }
+
+                        // 상태 리셋
+                        _isListening = false;
+                        _dragStartX = 0;
+                        _dragStartY = 0;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[MainViewModel] 취소 처리 중 오류: {ex.Message}");
+                }
+            });
+        }
+
+        /// <summary>
         /// 마우스 Down 이벤트 처리 (트리거 시작)
         /// </summary>
         private void HandleMouseDown(int x, int y)
@@ -117,6 +179,7 @@ namespace AI_Mouse.ViewModels
             // 시작점 기록
             _dragStartX = x;
             _dragStartY = y;
+            _isListening = true; // 드래그 시작 상태로 설정
 
             // OverlayWindow 표시
             if (_overlayWindow != null)
@@ -180,6 +243,8 @@ namespace AI_Mouse.ViewModels
         /// </summary>
         private async void HandleMouseUp(int x, int y)
         {
+            _isListening = false; // 드래그 종료 상태로 설정
+
             // OverlayWindow 숨김
             if (_overlayWindow != null)
             {
@@ -225,13 +290,14 @@ namespace AI_Mouse.ViewModels
                         // 오디오 녹음 오류는 무시하고 계속 진행
                     }
 
-                    // API Key 로드
-                    string? apiKey = LoadApiKey();
+                    // API Key 로드 (SettingsService 사용)
+                    var config = _settingsService.Load();
+                    string? apiKey = config.ApiKey;
                     if (string.IsNullOrWhiteSpace(apiKey))
                     {
                         // API Key가 없으면 사용자에게 안내
                         MessageBox.Show(
-                            "실행 폴더에 apikey.txt 파일을 만들고 키를 넣어주세요.",
+                            "설정에서 API Key를 입력해주세요.",
                             "API 키 필요",
                             MessageBoxButton.OK,
                             MessageBoxImage.Warning);
@@ -299,45 +365,24 @@ namespace AI_Mouse.ViewModels
         }
 
         /// <summary>
-        /// 외부 파일(apikey.txt)에서 API Key를 로드합니다.
+        /// 앱 종료 시 설정을 저장합니다. (App.xaml.cs의 OnExit에서 호출)
         /// </summary>
-        /// <returns>API Key 문자열 (파일이 없거나 읽기 실패 시 null 또는 빈 문자열)</returns>
-        /// <remarks>
-        /// 보안: API Key는 코드에 하드코딩하지 않고 외부 파일에서 로드하여 GitHub 유출을 방지합니다.
-        /// 파일 경로: AppDomain.CurrentDomain.BaseDirectory (실행 파일과 같은 폴더)
-        /// </remarks>
-        private string? LoadApiKey()
+        public void SaveSettings()
         {
             try
             {
-                // 실행 파일과 같은 폴더에서 apikey.txt 찾기
-                string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
-                string apiKeyPath = Path.Combine(baseDirectory, "apikey.txt");
-
-                // 파일이 존재하는지 확인
-                if (!File.Exists(apiKeyPath))
+                var config = new AppConfig
                 {
-                    Debug.WriteLine($"[MainViewModel] API Key 파일을 찾을 수 없습니다: {apiKeyPath}");
-                    return null;
-                }
-
-                // 파일 내용 읽기 (공백 제거)
-                string apiKey = File.ReadAllText(apiKeyPath).Trim();
-
-                if (string.IsNullOrWhiteSpace(apiKey))
-                {
-                    Debug.WriteLine("[MainViewModel] API Key 파일이 비어있습니다.");
-                    return null;
-                }
-
-                Debug.WriteLine("[MainViewModel] API Key 로드 성공");
-                return apiKey;
+                    ApiKey = _settingsService.Load().ApiKey, // 현재 API Key 유지
+                    TriggerButton = _hookService.CurrentTrigger // 현재 트리거 버튼 저장
+                };
+                _settingsService.Save(config);
+                Debug.WriteLine("[MainViewModel] 설정 저장 완료");
             }
             catch (Exception ex)
             {
-                // 파일 읽기 실패 시 예외 처리 (앱이 멈추지 않도록)
-                Debug.WriteLine($"[MainViewModel] API Key 로드 중 오류 발생: {ex.Message}");
-                return null;
+                Debug.WriteLine($"[MainViewModel] 설정 저장 중 오류: {ex.Message}");
+                Logger.Error("설정 저장 중 오류", ex);
             }
         }
 

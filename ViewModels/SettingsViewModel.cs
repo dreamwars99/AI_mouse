@@ -15,6 +15,7 @@ namespace AI_Mouse.ViewModels
     public partial class SettingsViewModel : ObservableObject
     {
         private readonly IGlobalHookService _hookService;
+        private readonly ISettingsService _settingsService;
 
         /// <summary>
         /// 설정 저장 완료 이벤트 (창 닫기용)
@@ -37,9 +38,11 @@ namespace AI_Mouse.ViewModels
         /// 생성자
         /// </summary>
         /// <param name="hookService">전역 마우스 훅 서비스 (DI 주입)</param>
-        public SettingsViewModel(IGlobalHookService hookService)
+        /// <param name="settingsService">설정 서비스 (DI 주입)</param>
+        public SettingsViewModel(IGlobalHookService hookService, ISettingsService settingsService)
         {
             _hookService = hookService ?? throw new ArgumentNullException(nameof(hookService));
+            _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
 
             // 기존 설정 로드
             LoadSettings();
@@ -65,14 +68,14 @@ namespace AI_Mouse.ViewModels
         {
             try
             {
-                // API Key 저장
-                string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
-                string apiKeyPath = Path.Combine(baseDirectory, "apikey.txt");
-
-                File.WriteAllText(apiKeyPath, ApiKey.Trim());
-                Debug.WriteLine("[SettingsViewModel] API Key 저장 완료");
-
-                // 트리거 버튼은 SelectedButton 변경 시 이미 반영됨 (OnSelectedButtonChanged)
+                // SettingsService를 통해 설정 저장 (JSON 파일)
+                var config = new AppConfig
+                {
+                    ApiKey = ApiKey.Trim(),
+                    TriggerButton = SelectedButton
+                };
+                _settingsService.Save(config);
+                Debug.WriteLine("[SettingsViewModel] 설정 저장 완료 (JSON)");
 
                 MessageBox.Show(
                     "설정이 저장되었습니다.",
@@ -138,19 +141,15 @@ namespace AI_Mouse.ViewModels
         {
             try
             {
-                // API Key 로드
-                string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
-                string apiKeyPath = Path.Combine(baseDirectory, "apikey.txt");
+                // SettingsService를 통해 설정 로드 (JSON 파일)
+                var config = _settingsService.Load();
+                ApiKey = config.ApiKey;
+                SelectedButton = config.TriggerButton;
 
-                if (File.Exists(apiKeyPath))
-                {
-                    ApiKey = File.ReadAllText(apiKeyPath).Trim();
-                }
+                // GlobalHookService에도 반영
+                _hookService.CurrentTrigger = config.TriggerButton;
 
-                // 트리거 버튼 로드 (GlobalHookService에서 가져오기)
-                SelectedButton = _hookService.CurrentTrigger;
-
-                Debug.WriteLine("[SettingsViewModel] 설정 로드 완료");
+                Debug.WriteLine("[SettingsViewModel] 설정 로드 완료 (JSON)");
             }
             catch (Exception ex)
             {
