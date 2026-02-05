@@ -221,6 +221,7 @@ MessageBox.Show("AI Mouse가 백그라운드에서 실행되었습니다.\n트�
 - ✅ MessageBox 대신 ResultWindow 사용하도록 변경 완료 (Phase 4.1)
 - ✅ ResultWindow 드래그 이동 기능 구현 완료 (DragMove, 17차)
 - ✅ ResultWindow 스크롤 UX 개선 완료 (MaxHeight 900, 픽셀 단위 스크롤, 17차)
+- ✅ ResultWindow UX 개선 완료 (항상 위 해제, 최소화 버튼, 스크롤 포커스 수정, 18차)
 
 ---
 
@@ -481,7 +482,7 @@ protected override void OnExit(ExitEventArgs e)
 | **ScreenCaptureService** | 화면 캡처, 이미지 변환 | NativeMethods, DpiHelper |
 | **AudioRecorderService** | 오디오 녹음, WAV 저장 | NAudio ✅ |
 | **GeminiService** | API 통신, 응답 파싱 | Google.GenerativeAI |
-| **ResultWindow** | 마크다운 렌더링, UI 표시, 드래그 이동, 스크롤 | Markdig.Wpf ✅ |
+| **ResultWindow** | 마크다운 렌더링, UI 표시, 드래그 이동, 스크롤, 최소화, 포커스 관리 | Markdig.Wpf ✅ |
 | **ResultViewModel** | 응답 텍스트 및 로딩 상태 관리 | 없음 (순수 상태) |
 
 ---
@@ -498,4 +499,4 @@ protected override void OnExit(ExitEventArgs e)
 ---
 
 **Last Updated:** 2026-02-05  
-**Version:** 2.3 (ResultWindow 드래그 이동 및 스크롤 UX 개선 완료)
+**Version:** 2.4 (ResultWindow UX 개선 완료: 항상 위 해제, 최소화 버튼, 스크롤 포커스)

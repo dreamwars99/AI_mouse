@@ -4,7 +4,7 @@
 - **Role:** Lead Architect & Cursor AI
 - **Framework:** .NET 8 (WPF)
 - **Platform:** Windows 10 / 11 Desktop
-- **Last Updated:** 2026-02-05 (ResultWindow 드래그 이동 및 스크롤 UX 개선 완료, 17차)
+- **Last Updated:** 2026-02-05 (ResultWindow UX 개선 완료: 항상 위 해제, 최소화 버튼, 스크롤 포커스 수정, 18차)
 
 ## 📌 1. Development Environment (개발 환경 상세)
 이 프로젝트를 이어받는 AI/개발자는 아래 설정을 필수로 확인해야 합니다.
@@ -87,6 +87,56 @@ AI_Mouse/
 
 
 ****## 📅 4. Development Log (개발 기록)
+
+### 2026-02-05 (목) - ResultWindow UX 개선: 항상 위 해제, 최소화 버튼, 스크롤 포커스 수정 (18차)
+**[목표]** **ResultWindow**의 UX를 개선한다. 항상 위 기능을 해제하여 다른 창 뒤로 이동 가능하게 하고, 최소화 버튼을 추가하며, 스크롤 포커스 문제를 해결하여 마우스 휠이 즉시 작동하도록 개선.
+
+#### Dev Action (ResultWindow UX Enhancement)
+- **Views/ResultWindow.xaml 수정:**
+  - `Topmost="True"` 속성 제거:
+    - 항상 위 기능을 해제하여 다른 창 뒤로 이동 가능하도록 변경
+    - 사용자가 다른 작업을 할 때 창이 방해되지 않도록 개선
+  - 타이틀 바에 최소화 버튼 추가:
+    - 닫기 버튼(✕) 왼쪽에 최소화 버튼(_) 추가
+    - `Grid.ColumnDefinitions`에 새로운 컬럼 추가 (`ColumnDefinition Width="Auto"`)
+    - 최소화 버튼 스타일은 닫기 버튼과 동일하게 적용 (호버 시 배경색 변경)
+    - `Click="MinimizeButton_Click"` 이벤트 핸들러 연결
+    - 버튼 간 간격 조정 (`Margin="0,0,4,0"`)
+  - `ScrollViewer`에 `Focusable="True"` 속성 추가:
+    - 스크롤 뷰어가 포커스를 받을 수 있도록 설정
+    - 마우스 휠 스크롤이 즉시 작동하도록 개선
+
+- **Views/ResultWindow.xaml.cs 수정:**
+  - `MinimizeButton_Click` 이벤트 핸들러 구현:
+    - `this.WindowState = WindowState.Minimized;` 호출로 창 최소화
+    - 작업 표시줄로 창을 최소화하여 화면 공간 확보
+  - `Loaded` 이벤트 핸들러 추가:
+    - 생성자에서 `Loaded` 이벤트 구독
+    - 창이 로드될 때 `this.Activate()`와 `this.Focus()` 호출
+    - 창이 표시되자마자 포커스를 받아 마우스 휠 스크롤이 즉시 작동하도록 보장
+    - 스크롤 포커스 문제 해결
+
+- **md/To_do.md 업데이트:**
+  - Phase 4.1 섹션에 "결과창 UX 개선 완료 (항상 위 해제, 최소화 버튼, 스크롤 포커스 수정)" 항목 추가 및 완료 처리
+
+#### Tech Details
+- **항상 위 해제:** `Topmost` 속성 제거로 일반 창처럼 동작하여 다른 창 뒤로 이동 가능
+- **최소화 기능:** `WindowState.Minimized`로 창을 작업 표시줄로 최소화
+- **포커스 관리:** `Loaded` 이벤트에서 `Activate()`와 `Focus()` 호출로 창 표시 시 즉시 포커스 획득
+- **스크롤 포커스:** `ScrollViewer`에 `Focusable="True"` 설정으로 마우스 휠 스크롤 즉시 작동
+- **UI 일관성:** 최소화 버튼 스타일을 닫기 버튼과 동일하게 유지하여 일관된 UX 제공
+
+#### Current Status
+- ✅ `ResultWindow.xaml`에서 `Topmost="True"` 제거 완료
+- ✅ 타이틀 바에 최소화 버튼 추가 완료 (`MinimizeButton_Click` 이벤트 연결)
+- ✅ `ScrollViewer`에 `Focusable="True"` 추가 완료
+- ✅ `ResultWindow.xaml.cs`에 `MinimizeButton_Click` 핸들러 구현 완료 (`WindowState.Minimized`)
+- ✅ `Loaded` 이벤트 핸들러 추가 완료 (`Activate()`, `Focus()` 호출)
+- ✅ `To_do.md`에 완료 항목 추가 완료
+- ✅ Linter 에러 없음 확인 완료
+- ResultWindow UX 개선 완료, 사용자 경험 향상 (항상 위 해제, 최소화 버튼, 스크롤 포커스 수정)
+
+---
 
 ### 2026-02-05 (목) - ResultWindow UX 개선: 드래그 이동 및 스크롤 기능 강화 (17차)
 **[목표]** 테두리 없는 창(`WindowStyle="None"`)인 **ResultWindow**를 사용자가 마우스로 드래그하여 이동할 수 있도록 기능을 추가하고, 긴 답변이 왔을 때 **마우스 휠 스크롤**이 부드럽게 작동하도록 UI를 개선.

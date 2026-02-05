@@ -19,6 +19,13 @@ namespace AI_Mouse.Views
         {
             InitializeComponent();
             
+            // 창이 로드될 때 포커스 설정
+            Loaded += (s, e) =>
+            {
+                this.Activate();
+                this.Focus();
+            };
+            
             // ESC 키로 창 닫기
             KeyDown += (s, e) =>
             {
@@ -45,6 +52,14 @@ namespace AI_Mouse.Views
         {
             _viewModel = viewModel;
             DataContext = viewModel;
+        }
+
+        /// <summary>
+        /// 최소화 버튼 클릭 이벤트 핸들러
+        /// </summary>
+        private void MinimizeButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.WindowState = WindowState.Minimized;
         }
 
         /// <summary>

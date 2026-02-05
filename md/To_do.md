@@ -175,6 +175,7 @@
 - ✅ `NativeMethods.cs`에 `GetCursorPos` Win32 API 추가 완료
 - ✅ 윈도우 드래그 이동 기능 구현 완료 (DragMove)
 - ✅ 결과창 스크롤 UX 개선 완료 (휠 지원 및 픽셀 단위 스크롤, MaxHeight 900)
+- ✅ 결과창 UX 개선 완료 (항상 위 해제, 최소화 버튼, 스크롤 포커스 수정)
 
 ---
 
