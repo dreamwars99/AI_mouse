@@ -82,23 +82,20 @@ sequenceDiagram
     participant VM as MainViewModel
     participant Hook as GlobalHookService
 
-    App->>DI: ServiceCollection 생성
-    DI->>DI: Services 등록 (Singleton/Transient)
-    DI->>DI: MainViewModel, MainWindow 등록
-    DI->>DI: GlobalHookService 등록 (Singleton)
+    App->>DI: ServiceCollection 생성 ✅
+    DI->>DI: Services 등록 (Transient) ✅
+    DI->>DI: MainViewModel, MainWindow 등록 ✅
     
-    App->>MainWindow: DI에서 MainWindow 인스턴스 생성
-    MainWindow->>VM: DataContext = MainViewModel (주입)
-    MainWindow->>MainWindow: Visibility = Hidden
+    App->>MainWindow: DI에서 MainWindow 인스턴스 생성 ✅
+    MainWindow->>VM: DataContext = MainViewModel (주입) ✅
+    MainWindow->>MainWindow: Hide() 호출 ✅
     
-    App->>Tray: TaskbarIcon 표시
-    Tray->>Tray: ContextMenu 설정 (설정, 종료)
+    App->>Tray: TaskbarIcon 표시 ✅
+    Tray->>Tray: ContextMenu 설정 (설정, 종료) ✅
     
-    App->>Hook: Start() 호출
-    Hook->>Hook: SetWindowsHookEx(WH_MOUSE_LL)
-    Hook->>VM: Hook 이벤트 구독 연결
+    Note over App,VM: 앱이 백그라운드에서 대기 상태 (Idle) ✅
     
-    Note over App,VM: 앱이 백그라운드에서 대기 상태 (Idle)
+    Note over Hook: (Phase 1.2에서 GlobalHookService 시작 예정)
 ```
 
 ---
@@ -160,32 +157,33 @@ graph TB
     GeminiService -->|생성| ApiResponse
 ```
 
-### 2.2. 의존성 주입 구조 (DI Container) ⏳ 구현 예정
+### 2.2. 의존성 주입 구조 (DI Container) ✅ 구현 완료
 
-**App.xaml.cs**에서 `ServiceCollection`을 구성합니다 (현재는 기본 상태, Phase 1.1에서 구현 예정):
+**App.xaml.cs**에서 `ServiceCollection`을 구성합니다:
 
 ```csharp
-// Singleton 서비스 (앱 생명주기 동안 단일 인스턴스)
-services.AddSingleton<IGlobalHookService, GlobalHookService>();
-services.AddSingleton<IScreenCaptureService, ScreenCaptureService>();
-services.AddSingleton<IAudioRecorderService, AudioRecorderService>();
-services.AddSingleton<IGeminiService, GeminiService>();
-services.AddSingleton<ITrayService, TrayService>();
-
-// ViewModel (Transient 또는 Singleton - 선택 가능)
+// ViewModel (Transient)
 services.AddTransient<MainViewModel>();
-services.AddTransient<OverlayViewModel>();
 
 // View (Transient - 필요 시 생성)
 services.AddTransient<MainWindow>();
-services.AddTransient<OverlayWindow>();
-services.AddTransient<ResultWindow>();
+
+// ServiceProvider 빌드
+var serviceProvider = services.BuildServiceProvider();
+
+// MainWindow 생성 및 DataContext 주입
+var mainWindow = serviceProvider.GetRequiredService<MainWindow>();
+mainWindow.DataContext = serviceProvider.GetRequiredService<MainViewModel>();
+mainWindow.Hide(); // 초기 상태를 숨김으로 유지
 ```
 
 **현재 상태:**
 - ✅ `Microsoft.Extensions.DependencyInjection` 패키지 설치 완료
-- ⏳ `App.xaml.cs`에서 `ServiceCollection` 구성 예정
+- ✅ `App.xaml.cs`에서 `ServiceCollection` 구성 완료
+- ✅ `MainViewModel`과 `MainWindow` DI 등록 완료
 - ✅ `MainViewModel` 클래스 생성 완료 (`CommunityToolkit.Mvvm` 사용)
+- ✅ 시스템 트레이 아이콘 구현 완료 (`TaskbarIcon` 리소스)
+- ⏳ 서비스 인터페이스 등록은 Phase 1.2에서 진행 예정
 
 ---
 
@@ -435,4 +433,4 @@ protected override void OnExit(ExitEventArgs e)
 ---
 
 **Last Updated:** 2026-02-05  
-**Version:** 1.1 (Phase 1.1 진행 중 - 기본 구조 생성 완료)
+**Version:** 1.2 (Phase 1.1 완료 - DI 컨테이너 구성 및 트레이 아이콘 구현 완료)

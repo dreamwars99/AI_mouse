@@ -4,7 +4,7 @@
 - **Role:** Lead Architect & Cursor AI
 - **Framework:** .NET 8 (WPF)
 - **Platform:** Windows 10 / 11 Desktop
-- **Last Updated:** 2026-02-05 (프로젝트 폴더 구조 생성 완료)
+- **Last Updated:** 2026-02-05 (Phase 1.1 DI 컨테이너 구성 및 시스템 트레이 아이콘 구현 완료)
 
 ## 📌 1. Development Environment (개발 환경 상세)
 이 프로젝트를 이어받는 AI/개발자는 아래 설정을 필수로 확인해야 합니다.
@@ -66,6 +66,54 @@ AI_Mouse/
 - `AudioRecorderService`: NAudio 기반 음성 녹음.
 
 ## 📅 4. Development Log (개발 기록)
+
+### 2026-02-05 (목) - Phase 1.1 DI 컨테이너 구성 및 시스템 트레이 아이콘 구현 (6차)
+**[목표]** `To_do.md`의 Phase 1.1 잔여 항목인 **의존성 주입(DI) 컨테이너 구성**과 **시스템 트레이 아이콘** 기능을 구현하여 앱이 백그라운드에서 실행되도록 완성.
+
+#### Dev Action (DI Container & System Tray)
+- **App.xaml 수정:**
+  - `StartupUri` 속성 제거 (DI를 통한 수동 제어를 위해 필수)
+  - `Hardcodet.NotifyIcon` 네임스페이스 추가 (`http://www.hardcodet.net/taskbar`)
+  - `TaskbarIcon` 리소스 정의 (`x:Key="TrayIcon"`)
+    - `ToolTipText="AI Mouse"` 설정
+    - `ContextMenu` 정의 및 '설정', '종료' `MenuItem` 추가
+    - '종료' 메뉴 클릭 이벤트 핸들러 연결 (`ExitMenuItem_Click`)
+
+- **App.xaml.cs 수정 (DI Bootstrapper):**
+  - `OnStartup` 메서드 오버라이드하여 DI 컨테이너 구성:
+    1. `ServiceCollection` 인스턴스 생성
+    2. `MainViewModel`과 `MainWindow`를 `AddTransient`로 등록
+    3. `ServiceProvider` 빌드 (`BuildServiceProvider`)
+    4. `MainWindow` 인스턴스를 `provider.GetRequiredService<MainWindow>()`로 생성
+    5. `MainWindow.DataContext`에 `provider.GetRequiredService<MainViewModel>()` 주입
+    6. `MainWindow.Hide()` 호출하여 초기 상태를 숨김으로 유지
+    7. 리소스에서 `TaskbarIcon`을 찾아 `_trayIcon` 멤버 변수에 할당
+    8. 아이콘 파일이 없으므로 `System.Drawing.SystemIcons.Application`을 `Icon.FromHandle`로 할당
+  - `OnExit` 메서드에서 리소스 정리 (`_trayIcon.Dispose()`, `_serviceProvider.Dispose()`)
+  - '종료' 메뉴 클릭 이벤트 핸들러에서 `Application.Current.Shutdown()` 호출
+
+- **MainWindow.xaml.cs 수정:**
+  - `Closing` 이벤트 핸들러 추가 (`MainWindow_Closing`)
+  - 사용자가 X 버튼을 눌렀을 때 `e.Cancel = true`로 설정하여 앱 종료 방지
+  - `Hide()` 호출로 창만 숨김 처리 (실제 종료는 트레이 메뉴에서만 가능)
+
+#### Tech Details
+- **DI 컨테이너 구성:** `Microsoft.Extensions.DependencyInjection`을 사용하여 `ServiceCollection`으로 서비스 등록 및 `ServiceProvider`로 인스턴스 생성
+- **트레이 아이콘 관리:** `Hardcodet.NotifyIcon.Wpf`의 `TaskbarIcon`을 리소스로 정의하고 코드에서 접근하여 아이콘 설정
+- **아이콘 처리:** 아이콘 파일이 없으므로 `System.Drawing.SystemIcons.Application`을 사용하여 기본 아이콘 표시
+- **앱 생명주기:** 앱 실행 시 아무 창도 표시되지 않고 시스템 트레이에만 아이콘 표시, X 버튼 클릭 시 숨김 처리, 트레이 메뉴에서만 종료 가능
+
+#### Current Status
+- ✅ DI 컨테이너 구성 완료 (`ServiceCollection`, `ServiceProvider` 사용)
+- ✅ `MainWindow`와 `MainViewModel` 의존성 주입 완료
+- ✅ 시스템 트레이 아이콘 구현 완료 (ContextMenu 포함)
+- ✅ 앱 실행 시 창 없이 트레이 아이콘만 표시됨
+- ✅ 윈도우 닫기 버튼 클릭 시 숨김 처리 동작 확인
+- ✅ 트레이 메뉴를 통한 정상 종료 기능 구현 완료
+- Phase 1.1의 핵심 기능 완료 (DI 컨테이너 구성 및 트레이 아이콘)
+- 다음 단계: Phase 1.2 전역 입력 감지 (Global Input Hook) 구현 준비
+
+---
 
 ### 2026-02-05 (목) - 프로젝트 문서 동기화 및 상태 업데이트 (5차)
 **[목표]** 현재 `AI_Mouse` 프로젝트의 실제 구현 상태(WPF .NET 8, MVVM 패턴, 생성된 폴더 구조)를 분석하여, 문서 파일 3종(`Tree.md`, `Architecture.md`, `To_do.md`)을 최신 상태로 동기화.

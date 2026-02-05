@@ -2,15 +2,15 @@
 
 ## 📋 현재 상태 요약 (Current Status Summary)
 
-**프로젝트 상태:** Phase 1.1 진행 중 (프로젝트 초기 세팅)
+**프로젝트 상태:** Phase 1.1 완료 ✅ (프로젝트 초기 세팅 완료)
 
 **완료된 주요 기능:**
 - ✅ 프로젝트 생성 및 환경 설정 (.NET 8 WPF)
 - ✅ NuGet 패키지 설치 (CommunityToolkit.Mvvm, Microsoft.Extensions.DependencyInjection, Hardcodet.NotifyIcon.Wpf)
 - ✅ 기본 폴더 구조 구축 (Views/, ViewModels/)
 - ✅ MainViewModel 클래스 생성
-- ⏳ MVVM 및 DI 컨테이너 구성 (다음 단계)
-- ⏳ 트레이 아이콘 구현 (다음 단계)
+- ✅ MVVM 및 DI 컨테이너 구성 완료
+- ✅ 트레이 아이콘 구현 완료
 
 ---
 
@@ -34,24 +34,24 @@
   - [ ] `Models/` 폴더 생성 (Phase 1.2에서 생성 예정)
   - [ ] `Helpers/` 폴더 생성 (Phase 1.2에서 생성 예정)
 
-- [x] **MVVM 기본 구조** ✅ 부분 완료
+- [x] **MVVM 기본 구조** ✅ 완료
   - [x] `ViewModels/MainViewModel.cs` 생성 (`ObservableObject` 상속) ✅
-  - [ ] `App.xaml.cs`에서 `ServiceCollection` 초기화 (다음 단계)
-  - [ ] `MainWindow`와 `MainViewModel` DI 등록 (다음 단계)
-  - [ ] `App.xaml`에서 `StartupUri` 제거 (다음 단계)
+  - [x] `App.xaml.cs`에서 `ServiceCollection` 초기화 ✅
+  - [x] `MainWindow`와 `MainViewModel` DI 등록 ✅
+  - [x] `App.xaml`에서 `StartupUri` 제거 ✅
 
-- [ ] **트레이 아이콘 및 생명주기 구현** ⏳ 다음 단계
-  - [ ] `TaskbarIcon` 리소스 정의 (`App.xaml`에 추가)
-  - [ ] 앱 실행 시 트레이 아이콘만 표시
-  - [ ] ContextMenu 구현 ('설정', '종료')
-  - [ ] `MainWindow` 시작 시 `Visibility="Hidden"` 설정
-  - [ ] 윈도우 닫기 버튼 클릭 시 숨기기 처리 (`Closing` 이벤트)
+- [x] **트레이 아이콘 및 생명주기 구현** ✅ 완료
+  - [x] `TaskbarIcon` 리소스 정의 (`App.xaml`에 추가) ✅
+  - [x] 앱 실행 시 트레이 아이콘만 표시 ✅
+  - [x] ContextMenu 구현 ('설정', '종료') ✅
+  - [x] `MainWindow` 시작 시 `Hide()` 호출로 숨김 처리 ✅
+  - [x] 윈도우 닫기 버튼 클릭 시 숨기기 처리 (`Closing` 이벤트) ✅
 
 ---
 
 ## ✅ Completed (완료된 작업)
 
-### Phase 1.1: 프로젝트 세팅 (부분 완료)
+### Phase 1.1: 프로젝트 세팅 ✅ 완료
 - ✅ .NET 8 WPF 프로젝트 생성 (`AI_Mouse.csproj`)
 - ✅ NuGet 패키지 설치 완료:
   - `CommunityToolkit.Mvvm` v8.2.2
@@ -62,6 +62,10 @@
   - `ViewModels/` 폴더 및 `MainViewModel.cs`
 - ✅ 네임스페이스 구조 설정 (`AI_Mouse.Views`, `AI_Mouse.ViewModels`)
 - ✅ `MainViewModel` 클래스 생성 (`ObservableObject` 상속)
+- ✅ DI 컨테이너 구성 (`App.xaml.cs`에서 `ServiceCollection` 사용)
+- ✅ `MainWindow`와 `MainViewModel` 의존성 주입 구현
+- ✅ 시스템 트레이 아이콘 구현 (`TaskbarIcon` 리소스 및 ContextMenu)
+- ✅ 앱 생명주기 관리 (초기 숨김 상태, Closing 이벤트 처리)
 
 ---
 
@@ -209,4 +213,4 @@
 
 ---
 
-**마지막 업데이트**: 2026-02-05 (Phase 1.1 진행 중 - 기본 구조 생성 완료, DI 컨테이너 구성 및 트레이 아이콘 구현 예정)
+**마지막 업데이트**: 2026-02-05 (Phase 1.1 완료 - DI 컨테이너 구성 및 트레이 아이콘 구현 완료)

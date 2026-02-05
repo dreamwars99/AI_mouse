@@ -10,7 +10,7 @@
 
 ```text
 AI_Mouse/
-├── App.xaml.cs                    # [Entry] 앱 시작점 (DI 컨테이너 구성 예정)
+├── App.xaml.cs                    # [Entry] 앱 시작점 (DI 컨테이너 구성 완료 ✅)
 ├── App.xaml                       # 애플리케이션 리소스 정의
 ├── AI_Mouse.csproj                # 프로젝트 파일 (.NET 8 WPF)
 ├── AI_Mouse.sln                   # 솔루션 파일
@@ -147,32 +147,27 @@ graph TB
     GeminiService -->|생성| ApiResponse
 ```
 
-### 2.2. App.xaml.cs 구조 (DI 컨테이너) ⏳ 구현 예정
+### 2.2. App.xaml.cs 구조 (DI 컨테이너) ✅ 구현 완료
 
 ```text
 App.xaml.cs (Bootstrapper)
 │
-├── OnStartup() ⏳ 구현 예정
-│   ├── ServiceCollection 생성
+├── OnStartup() ✅ 구현 완료
+│   ├── ServiceCollection 생성 ✅
 │   ├── Services 등록:
-│   │   ├── Singleton: IGlobalHookService → GlobalHookService
-│   │   ├── Singleton: IScreenCaptureService → ScreenCaptureService
-│   │   ├── Singleton: IAudioRecorderService → AudioRecorderService
-│   │   ├── Singleton: IGeminiService → GeminiService
-│   │   ├── Singleton: ITrayService → TrayService
-│   │   ├── Transient: MainViewModel
-│   │   ├── Transient: OverlayViewModel
-│   │   ├── Transient: MainWindow
-│   │   └── Transient: OverlayWindow
+│   │   ├── Transient: MainViewModel ✅
+│   │   └── Transient: MainWindow ✅
+│   │   └── (추후 Phase 1.2에서 서비스 등록 예정)
 │   │
-│   ├── ServiceProvider 빌드
-│   ├── MainWindow 인스턴스 생성 (DI)
-│   ├── MainWindow.DataContext = MainViewModel (주입)
-│   ├── MainWindow.Visibility = Hidden
-│   └── TaskbarIcon 표시
+│   ├── ServiceProvider 빌드 ✅
+│   ├── MainWindow 인스턴스 생성 (DI) ✅
+│   ├── MainWindow.DataContext = MainViewModel (주입) ✅
+│   ├── MainWindow.Hide() 호출 ✅
+│   └── TaskbarIcon 표시 ✅
 │
-└── OnExit() ⏳ 구현 예정
-    └── ServiceProvider.Dispose() (리소스 정리)
+└── OnExit() ✅ 구현 완료
+    ├── TaskbarIcon.Dispose() ✅
+    └── ServiceProvider.Dispose() (리소스 정리) ✅
 ```
 
 ---
@@ -182,24 +177,24 @@ App.xaml.cs (Bootstrapper)
 ### 3.1. 앱 시작 시퀀스
 
 ```text
-1. App.xaml.cs OnStartup()
+1. App.xaml.cs OnStartup() ✅
    │
-   ├── 2. ServiceCollection 구성
-   │   └── 모든 서비스 및 ViewModel 등록
+   ├── 2. ServiceCollection 구성 ✅
+   │   └── MainViewModel, MainWindow 등록 (Transient)
    │
-   ├── 3. ServiceProvider 빌드
+   ├── 3. ServiceProvider 빌드 ✅
    │   └── DI 컨테이너 준비 완료
    │
-   ├── 4. MainWindow 생성 (DI)
-   │   ├── MainViewModel 주입
-   │   ├── DataContext 설정
-   │   └── Visibility = Hidden
+   ├── 4. MainWindow 생성 (DI) ✅
+   │   ├── MainViewModel 주입 ✅
+   │   ├── DataContext 설정 ✅
+   │   └── Hide() 호출로 숨김 처리 ✅
    │
-   ├── 5. GlobalHookService 시작
-   │   └── SetWindowsHookEx(WH_MOUSE_LL)
+   ├── 5. TaskbarIcon 표시 ✅
+   │   └── 시스템 트레이에 아이콘 표시
    │
-   └── 6. TaskbarIcon 표시
-       └── 앱이 백그라운드에서 대기 (Idle 상태)
+   └── 6. 앱이 백그라운드에서 대기 (Idle 상태) ✅
+       └── (Phase 1.2에서 GlobalHookService 시작 예정)
 ```
 
 ### 3.2. 사용자 질의 시퀀스
@@ -379,4 +374,4 @@ graph LR
 ---
 
 **Last Updated:** 2026-02-05  
-**Version:** 1.1 (Phase 1.1 진행 중 - 폴더 구조 및 기본 파일 생성 완료)
+**Version:** 1.2 (Phase 1.1 완료 - DI 컨테이너 구성 및 트레이 아이콘 구현 완료)
