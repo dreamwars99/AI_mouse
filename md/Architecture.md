@@ -432,6 +432,7 @@ protected override void OnExit(ExitEventArgs e)
   - 물리 좌표 ↔ 논리 좌표 변환 메서드 구현 ✅
   - `PhysicalToLogicalRect` 메서드로 WPF OverlayWindow에 사용할 논리 좌표 변환 ✅
   - `MainViewModel`의 `HandleMouseMove`에서 DPI 변환 적용 ✅
+  - 네임스페이스 별칭 적용으로 타입 모호성 해결 ✅ (`WpfPoint`, `WinPoint`, `WpfRect`)
 
 ---
 
@@ -462,4 +463,4 @@ protected override void OnExit(ExitEventArgs e)
 ---
 
 **Last Updated:** 2026-02-05  
-**Version:** 1.7 (Phase 2.2 완료 - NAudio 기반 마이크 음성 녹음 서비스 구현 완료)
+**Version:** 1.8 (DpiHelper 네임스페이스 별칭 적용 완료 - 타입 모호성 해결)

@@ -1,7 +1,12 @@
 using System;
-using System.Drawing;
+using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Media;
+
+// [Alias 정의] 모호함 방지
 using WpfPoint = System.Windows.Point;
+using WinPoint = System.Drawing.Point;
+using WpfRect = System.Windows.Rect;
 
 namespace AI_Mouse.Helpers
 {
@@ -19,7 +24,7 @@ namespace AI_Mouse.Helpers
         /// <returns>DPI 값 (96 = 100%, 192 = 200% 등)</returns>
         public static uint GetDpiForPoint(int x, int y)
         {
-            var point = new Point(x, y); // System.Drawing.Point (Win32 API용)
+            var point = new WinPoint(x, y); // System.Drawing.Point (Win32 API용)
             var monitorHandle = NativeMethods.MonitorFromPoint(point, NativeMethods.MonitorFromPointFlags.MONITOR_DEFAULTTONEAREST);
 
             if (monitorHandle == IntPtr.Zero)
@@ -61,14 +66,14 @@ namespace AI_Mouse.Helpers
         /// <param name="logicalY">논리 Y 좌표</param>
         /// <param name="dpi">DPI 값 (기본값: null이면 자동 감지)</param>
         /// <returns>물리 좌표 (System.Drawing.Point)</returns>
-        public static Point LogicalToPhysical(double logicalX, double logicalY, uint? dpi = null)
+        public static WinPoint LogicalToPhysical(double logicalX, double logicalY, uint? dpi = null)
         {
             // 논리 좌표를 물리 좌표로 변환하려면 기준점이 필요하므로,
             // 일반적으로는 사용하지 않지만 필요시 구현
             uint actualDpi = dpi ?? 96;
             double scaleFactor = actualDpi / 96.0;
 
-            return new Point((int)(logicalX * scaleFactor), (int)(logicalY * scaleFactor));
+            return new WinPoint((int)(logicalX * scaleFactor), (int)(logicalY * scaleFactor));
         }
 
         /// <summary>
@@ -77,12 +82,12 @@ namespace AI_Mouse.Helpers
         /// <param name="physicalRect">물리 Rect (물리 좌표)</param>
         /// <param name="dpi">DPI 값 (기본값: null이면 자동 감지)</param>
         /// <returns>논리 Rect (WPF Rect)</returns>
-        public static Rect PhysicalToLogicalRect(Rect physicalRect, uint? dpi = null)
+        public static WpfRect PhysicalToLogicalRect(WpfRect physicalRect, uint? dpi = null)
         {
             uint actualDpi = dpi ?? GetDpiForPoint((int)physicalRect.X, (int)physicalRect.Y);
             double scaleFactor = 96.0 / actualDpi;
 
-            return new Rect(
+            return new WpfRect(
                 physicalRect.X * scaleFactor,
                 physicalRect.Y * scaleFactor,
                 physicalRect.Width * scaleFactor,
@@ -95,12 +100,12 @@ namespace AI_Mouse.Helpers
         /// <param name="logicalRect">논리 Rect (WPF Rect)</param>
         /// <param name="dpi">DPI 값 (기본값: null이면 자동 감지)</param>
         /// <returns>물리 Rect (물리 좌표)</returns>
-        public static Rect LogicalToPhysicalRect(Rect logicalRect, uint? dpi = null)
+        public static WpfRect LogicalToPhysicalRect(WpfRect logicalRect, uint? dpi = null)
         {
             uint actualDpi = dpi ?? 96;
             double scaleFactor = actualDpi / 96.0;
 
-            return new Rect(
+            return new WpfRect(
                 logicalRect.X * scaleFactor,
                 logicalRect.Y * scaleFactor,
                 logicalRect.Width * scaleFactor,

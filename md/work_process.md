@@ -4,7 +4,7 @@
 - **Role:** Lead Architect & Cursor AI
 - **Framework:** .NET 8 (WPF)
 - **Platform:** Windows 10 / 11 Desktop
-- **Last Updated:** 2026-02-05 (Phase 2.2 완료 - NAudio 기반 마이크 음성 녹음 서비스 구현 완료)
+- **Last Updated:** 2026-02-05 (DpiHelper 네임스페이스 별칭 적용 완료 - 타입 모호성 해결)
 
 ## 📌 1. Development Environment (개발 환경 상세)
 이 프로젝트를 이어받는 AI/개발자는 아래 설정을 필수로 확인해야 합니다.
@@ -66,7 +66,53 @@ AI_Mouse/
 - `ScreenCaptureService`: GDI+를 이용한 화면 캡처.
 - `AudioRecorderService`: NAudio 기반 음성 녹음.
 
+
 ## 📅 4. Development Log (개발 기록)
+
+### 2026-02-05 (목) - DpiHelper 네임스페이스 별칭 적용 및 타입 모호성 해결 (12차)
+**[목표]** `System.Drawing.Point`와 `System.Windows.Point` 간의 모호함(CS0104)을 해결하기 위해 네임스페이스 별칭(Alias)을 적용하여 컴파일 에러를 제거하고 타입 의도를 명확히 함.
+
+#### Dev Action (Namespace Alias & Type Clarity)
+- **Helpers/DpiHelper.cs 수정:**
+  - `using` 섹션 정리 및 네임스페이스 별칭 추가:
+    - `System.Drawing` 제거 (별칭으로 대체)
+    - `System.Runtime.InteropServices` 추가
+    - `System.Windows.Media` 추가
+    - 네임스페이스 별칭 정의:
+      - `WpfPoint = System.Windows.Point` (논리 좌표용)
+      - `WinPoint = System.Drawing.Point` (물리 좌표용)
+      - `WpfRect = System.Windows.Rect` (WPF Rect용)
+  - 타입 명시 수정:
+    - `GetDpiForPoint`: `new WinPoint(x, y)` 사용 (Win32 API용 `System.Drawing.Point`)
+    - `PhysicalToLogical`: 반환 타입 `WpfPoint` (이미 적용됨)
+    - `LogicalToPhysical`: 반환 타입 `WinPoint`로 변경 (`System.Drawing.Point`)
+    - `PhysicalToLogicalRect`: 매개변수 및 반환 타입 `WpfRect`로 변경
+    - `LogicalToPhysicalRect`: 매개변수 및 반환 타입 `WpfRect`로 변경
+  - 코드 내부 타입 사용 명확화:
+    - 모든 `Point` 사용을 `WpfPoint` 또는 `WinPoint`로 명시
+    - 모든 `Rect` 사용을 `WpfRect`로 명시
+    - 주석에 타입 용도 명확히 표시
+
+#### Tech Details
+- **네임스페이스 모호성 해결:** `System.Drawing.Point`와 `System.Windows.Point`가 모두 `Point`로 인식되어 발생하는 CS0104 컴파일 에러 해결
+- **타입 의도 명확화:** 별칭을 통해 각 타입의 용도가 명확해짐
+  - `WpfPoint`: WPF 논리 좌표계 (DPI-independent)
+  - `WinPoint`: Win32 물리 좌표계 (Physical Pixel)
+  - `WpfRect`: WPF Rect (논리 좌표계)
+- **기존 로직 유지:** 타입 명시만 수정하여 기존 변환 로직은 그대로 유지
+- **코드 가독성 향상:** 별칭을 통해 코드를 읽는 사람이 각 타입의 용도를 쉽게 파악 가능
+
+#### Current Status
+- ✅ 네임스페이스 별칭 정의 완료 (`WpfPoint`, `WinPoint`, `WpfRect`)
+- ✅ `GetDpiForPoint`에서 `WinPoint` 사용으로 수정 완료
+- ✅ `LogicalToPhysical` 반환 타입 `WinPoint`로 변경 완료
+- ✅ `PhysicalToLogicalRect` 및 `LogicalToPhysicalRect` 매개변수/반환 타입 `WpfRect`로 변경 완료
+- ✅ 컴파일 에러(CS0104) 해결 완료
+- ✅ 타입 의도 명확화 완료
+- ✅ Linter 에러 없음 확인 완료
+- 코드 품질 개선 완료, 다음 단계: Phase 3.1 Gemini API 연동 (Intelligence Layer) 구현 준비
+
+---
 
 ### 2026-02-05 (목) - Phase 2.2 NAudio 기반 마이크 음성 녹음 서비스 구현 (11차)
 **[목표]** `NAudio` 라이브러리를 사용하여 **마이크 음성 녹음 서비스(AudioRecorderService)**를 구현하고, 드래그 동작과 연동하여 **WAV 파일**을 생성하는 기능을 완성.

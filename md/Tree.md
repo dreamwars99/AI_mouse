@@ -399,4 +399,4 @@ graph LR
 ---
 
 **Last Updated:** 2026-02-05  
-**Version:** 1.7 (Phase 2.2 완료 - NAudio 기반 마이크 음성 녹음 서비스 구현 완료)
+**Version:** 1.8 (DpiHelper 네임스페이스 별칭 적용 완료 - 타입 모호성 해결)
