@@ -1,0 +1,91 @@
+# WPF .NET Build Artifacts (빌드 산출물 - AI가 읽을 필요 없음)
+bin/
+obj/
+Debug/
+Release/
+x64/
+x86/
+AnyCPU/
+*.dll
+*.exe
+*.pdb
+*.cache
+
+# Visual Studio & IDE
+.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+# NuGet Packages (패키지 캐시 - 수정할 코드 아님)
+packages/
+*.nupkg
+*.snupkg
+.nuget/
+
+# WPF Generated Files (자동 생성 파일)
+*.g.cs
+*.g.i.cs
+*.Designer.cs
+*.resx.bak
+
+# Binary & Asset Files (AI는 텍스트만 잘 읽음)
+*.png
+*.jpg
+*.jpeg
+*.ico
+*.bmp
+*.gif
+*.tiff
+*.psd
+*.mp3
+*.wav
+*.ogg
+*.mp4
+*.mov
+*.pdf
+*.zip
+*.7z
+*.rar
+
+# Temporary Files
+*.tmp
+*.temp
+*.log
+*.cache
+*.swp
+*.lock
+
+# OS Generated Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Version Control
+.git/
+.gitignore
+
+# Optional: 문서 폴더 (필요할 때만 @로 호출)
+# md/
+
+# Test Results (테스트 결과 파일)
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+
+# Publish Profiles (배포 프로필)
+*.pubxml
+*.publishproj
+
+# Rider
+.idea/
+*.sln.iml
+
+# JetBrains
+.idea/
+*.iml
