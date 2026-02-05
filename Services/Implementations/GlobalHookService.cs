@@ -133,34 +133,55 @@ namespace AI_Mouse.Services.Implementations
         /// </summary>
         private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
         {
-            // nCode가 0보다 작으면 CallNextHookEx를 호출하고 즉시 반환
-            if (nCode < 0)
+            try
             {
-                return NativeMethods.CallNextHookEx(_hookId, nCode, wParam, lParam);
-            }
-
-            var message = wParam.ToInt32();
-            var hookStruct = Marshal.PtrToStructure<NativeMethods.MSLLHOOKSTRUCT>(lParam);
-
-            // 현재 트리거 버튼에 해당하는 메시지인지 확인
-            bool isTriggerMessage = IsTriggerMessage(message, hookStruct.mouseData);
-
-            if (isTriggerMessage)
-            {
-                // 트리거 버튼의 Down/Up 이벤트 처리
-                if (message == GetDownMessage(_currentTrigger) || message == GetUpMessage(_currentTrigger))
+                // nCode가 0보다 작으면 CallNextHookEx를 호출하고 즉시 반환
+                if (nCode < 0)
                 {
-                    // 드래그 상태 업데이트
-                    if (message == GetDownMessage(_currentTrigger))
-                    {
-                        _isDragging = true;
-                    }
-                    else if (message == GetUpMessage(_currentTrigger))
-                    {
-                        _isDragging = false;
-                    }
+                    return NativeMethods.CallNextHookEx(_hookId, nCode, wParam, lParam);
+                }
 
-                    // 마우스 메시지 처리 (비동기로 전파하여 콜백을 경량화)
+                var message = wParam.ToInt32();
+                var hookStruct = Marshal.PtrToStructure<NativeMethods.MSLLHOOKSTRUCT>(lParam);
+
+                // 현재 트리거 버튼에 해당하는 메시지인지 확인
+                bool isTriggerMessage = IsTriggerMessage(message, hookStruct.mouseData);
+
+                if (isTriggerMessage)
+                {
+                    // 트리거 버튼의 Down/Up 이벤트 처리
+                    if (message == GetDownMessage(_currentTrigger) || message == GetUpMessage(_currentTrigger))
+                    {
+                        // 드래그 상태 업데이트
+                        if (message == GetDownMessage(_currentTrigger))
+                        {
+                            _isDragging = true;
+                        }
+                        else if (message == GetUpMessage(_currentTrigger))
+                        {
+                            _isDragging = false;
+                        }
+
+                        // 마우스 메시지 처리 (비동기로 전파하여 콜백을 경량화)
+                        Task.Run(() =>
+                        {
+                            try
+                            {
+                                ProcessMouseMessage(wParam, lParam);
+                            }
+                            catch (Exception ex)
+                            {
+                                Logger.Error("마우스 메시지 처리 중 오류", ex);
+                            }
+                        });
+
+                        // 기본 동작(예: 뒤로가기, 우클릭 메뉴)을 막기 위해 이벤트 전파 차단
+                        return (IntPtr)1;
+                    }
+                }
+                else if (_isDragging && message == NativeMethods.MouseMessages.WM_MOUSEMOVE)
+                {
+                    // 드래그 중 Move 이벤트는 처리하되 기본 동작은 허용
                     Task.Run(() =>
                     {
                         try
@@ -169,32 +190,30 @@ namespace AI_Mouse.Services.Implementations
                         }
                         catch (Exception ex)
                         {
-                            Debug.WriteLine($"[GlobalHookService] 마우스 메시지 처리 중 오류: {ex.Message}");
+                            Logger.Error("마우스 메시지 처리 중 오류", ex);
                         }
                     });
+                }
 
-                    // 기본 동작(예: 뒤로가기, 우클릭 메뉴)을 막기 위해 이벤트 전파 차단
-                    return (IntPtr)1;
+                // 다음 훅으로 전달
+                return NativeMethods.CallNextHookEx(_hookId, nCode, wParam, lParam);
+            }
+            catch (Exception ex)
+            {
+                // HookCallback 내부에서 발생하는 모든 예외를 로깅
+                Logger.Error("HookCallback 내부 오류 (후킹이 끊어질 수 있음)", ex);
+                
+                // 예외 발생 시에도 다음 훅으로 전달하여 시스템 안정성 유지
+                try
+                {
+                    return NativeMethods.CallNextHookEx(_hookId, nCode, wParam, lParam);
+                }
+                catch
+                {
+                    // CallNextHookEx도 실패하면 0 반환 (시스템이 처리하도록)
+                    return IntPtr.Zero;
                 }
             }
-            else if (_isDragging && message == NativeMethods.MouseMessages.WM_MOUSEMOVE)
-            {
-                // 드래그 중 Move 이벤트는 처리하되 기본 동작은 허용
-                Task.Run(() =>
-                {
-                    try
-                    {
-                        ProcessMouseMessage(wParam, lParam);
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine($"[GlobalHookService] 마우스 메시지 처리 중 오류: {ex.Message}");
-                    }
-                });
-            }
-
-            // 다음 훅으로 전달
-            return NativeMethods.CallNextHookEx(_hookId, nCode, wParam, lParam);
         }
 
         /// <summary>

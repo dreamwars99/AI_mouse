@@ -10,6 +10,7 @@ using AI_Mouse.Services.Interfaces;
 using AI_Mouse.Services.Implementations;
 using System.Net.Http;
 using System;
+using AI_Mouse.Helpers;
 
 namespace AI_Mouse
 {
@@ -34,6 +35,21 @@ namespace AI_Mouse
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
+
+            // 0. 로거 초기화 및 앱 시작 로그 기록
+            try
+            {
+                Logger.Initialize();
+                Logger.Info("앱 시작됨");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[App] 로거 초기화 실패: {ex.Message}");
+            }
+
+            // 전역 예외 처리 이벤트 구독
+            this.DispatcherUnhandledException += App_DispatcherUnhandledException;
+            AppDomain.CurrentDomain.UnhandledException += AppDomain_UnhandledException;
 
             // 1. ServiceCollection 인스턴스 생성
             var services = new ServiceCollection();
@@ -118,49 +134,108 @@ namespace AI_Mouse
         /// </summary>
         protected override void OnExit(ExitEventArgs e)
         {
-            // GlobalHookService 중지 (훅 해제)
-            if (_serviceProvider != null)
+            try
             {
-                try
+                // GlobalHookService 중지 (훅 해제)
+                if (_serviceProvider != null)
                 {
-                    var hookService = _serviceProvider.GetService<IGlobalHookService>();
-                    hookService?.Stop();
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[App] 훅 중지 중 오류: {ex.Message}");
+                    try
+                    {
+                        var hookService = _serviceProvider.GetService<IGlobalHookService>();
+                        hookService?.Stop();
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Error("훅 중지 중 오류", ex);
+                    }
+
+                    try
+                    {
+                        // AudioRecorderService 정리 (IDisposable)
+                        var audioService = _serviceProvider.GetService<IAudioRecorderService>();
+                        audioService?.Dispose();
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Error("오디오 서비스 정리 중 오류", ex);
+                    }
+
+                    try
+                    {
+                        // HttpClient 정리
+                        var httpClient = _serviceProvider.GetService<HttpClient>();
+                        httpClient?.Dispose();
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Error("HttpClient 정리 중 오류", ex);
+                    }
+
+                    // ServiceProvider가 IDisposable이면 Dispose 호출
+                    if (_serviceProvider is IDisposable disposable)
+                    {
+                        disposable.Dispose();
+                    }
                 }
 
-                try
-                {
-                    // AudioRecorderService 정리 (IDisposable)
-                    var audioService = _serviceProvider.GetService<IAudioRecorderService>();
-                    audioService?.Dispose();
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[App] 오디오 서비스 정리 중 오류: {ex.Message}");
-                }
+                // 트레이 아이콘 정리
+                _trayIcon?.Dispose();
 
-                try
-                {
-                    // HttpClient 정리
-                    var httpClient = _serviceProvider.GetService<HttpClient>();
-                    httpClient?.Dispose();
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[App] HttpClient 정리 중 오류: {ex.Message}");
-                }
+                // 앱 종료 로그 기록
+                Logger.Info("앱 종료됨");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[App] 종료 처리 중 오류: {ex.Message}");
             }
 
-            // 트레이 아이콘 정리
-            _trayIcon?.Dispose();
-
-            // ServiceProvider 정리 (모든 IDisposable 서비스 해제)
-            _serviceProvider?.Dispose();
-
             base.OnExit(e);
+        }
+
+        /// <summary>
+        /// WPF 디스패처에서 처리되지 않은 예외를 처리합니다.
+        /// </summary>
+        private void App_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
+        {
+            try
+            {
+                Logger.Error("처리되지 않은 예외 발생 (Dispatcher)", e.Exception);
+                
+                MessageBox.Show(
+                    "오류가 발생했습니다. 로그를 확인하세요.\n\n" + e.Exception.Message,
+                    "오류",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+
+                // 가능하면 앱을 유지
+                e.Handled = true;
+            }
+            catch
+            {
+                // 로거 자체가 실패하면 무시
+            }
+        }
+
+        /// <summary>
+        /// AppDomain에서 처리되지 않은 예외를 처리합니다 (복구 불가).
+        /// </summary>
+        private void AppDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            try
+            {
+                if (e.ExceptionObject is Exception ex)
+                {
+                    Logger.Error("처리되지 않은 예외 발생 (AppDomain)", ex);
+                }
+                else
+                {
+                    Logger.Error($"처리되지 않은 예외 발생 (AppDomain): {e.ExceptionObject}");
+                }
+            }
+            catch
+            {
+                // 로거 자체가 실패하면 무시
+            }
         }
 
         /// <summary>

@@ -4,7 +4,7 @@
 - **Role:** Lead Architect & Cursor AI
 - **Framework:** .NET 8 (WPF)
 - **Platform:** Windows 10 / 11 Desktop
-- **Last Updated:** 2026-02-05 (Phase 4.2 완료: SettingsWindow 구현 및 트리거 버튼 동적 변경, 20차)
+- **Last Updated:** 2026-02-05 (Phase 4.3 완료: 파일 로깅 시스템 및 전역 예외 처리 구현, 21차)
 
 ## 📌 1. Development Environment (개발 환경 상세)
 이 프로젝트를 이어받는 AI/개발자는 아래 설정을 필수로 확인해야 합니다.
@@ -87,6 +87,56 @@ AI_Mouse/
 
 
 ## 📅 4. Development Log (개발 기록)
+
+### 2026-02-05 (목) - Phase 4.3 완료: 파일 로깅 시스템 및 전역 예외 처리 구현 (21차)
+**[목표]** 프로젝트의 마지막 단계인 **Phase 4.3**을 수행한다. 앱의 안정성을 위해 **파일 로깅 시스템**과 **전역 예외 처리(Global Exception Handling)**를 구현하고, 종료 시 리소스 해제를 보장한다.
+
+#### Dev Action (Logger & Global Exception Handling)
+- **Helpers/Logger.cs 생성:**
+  - 정적 클래스 `Logger` 구현
+  - 로그 경로: `Path.GetTempPath() + "AI_Mouse\\logs\\log_{날짜}.txt"`
+  - `Info(string message)`, `Error(string message, Exception ex)` 메서드 구현
+  - 로그 포맷: `[시간] [레벨] 메시지` (예: `[14:30:05] [INFO] 앱 시작됨`)
+  - 날짜별 파일 분리 (하루 단위)
+  - `lock`을 사용한 스레드 안전성 보장
+  - `File.AppendAllText` 사용 (단순함을 위해 비동기 생략, 예외 처리 포함)
+  - `Initialize()` 메서드로 로그 디렉토리 자동 생성
+
+- **App.xaml.cs 수정 (전역 예외 처리 및 정리):**
+  - `OnStartup` 최상단에 로거 초기화 및 "App Started" 로그 기록
+  - 전역 예외 처리 이벤트 구독:
+    - `DispatcherUnhandledException`: WPF 디스패처 예외 처리 (가능하면 앱 유지, `e.Handled = true`)
+    - `AppDomain.CurrentDomain.UnhandledException`: AppDomain 예외 처리 (복구 불가)
+  - 예외 발생 시 사용자에게 `MessageBox`로 정중한 알림 제공
+  - `OnExit` 오버라이드 개선:
+    - DI 컨테이너(`ServiceProvider`)가 `IDisposable`이면 `Dispose()` 호출
+    - `NotifyIcon` 제거
+    - "App Stopped" 로그 기록
+    - 모든 정리 작업에 예외 처리 및 로깅 추가
+
+- **GlobalHookService 수정 (안전장치):**
+  - `HookCallback` 내부의 모든 예외를 `try-catch`로 감싸기
+  - 예외 발생 시 `Logger.Error` 호출하여 후킹이 끊어지는 원인 기록
+  - 예외 발생 시에도 시스템 안정성을 위해 다음 훅으로 전달
+  - `Task.Run` 내부의 예외 처리도 `Logger.Error` 사용하도록 변경
+
+#### Tech Details
+- **파일 로깅:** 날짜별 파일 분리로 로그 파일 크기 관리
+- **전역 예외 처리:** 앱 크래시 방지 및 사용자 친화적 오류 메시지 제공
+- **리소스 관리:** 종료 시 모든 리소스 안전하게 해제
+- **후킹 안정성:** HookCallback 내부 예외 처리로 후킹 끊김 방지
+- **스레드 안전성:** `lock`을 사용한 파일 I/O 동기화
+
+#### Current Status
+- ✅ `Helpers/Logger.cs` 생성 완료 (정적 클래스, 날짜별 파일 분리)
+- ✅ `Logger.Info()`, `Logger.Error()` 메서드 구현 완료
+- ✅ `App.xaml.cs`에 로거 초기화 및 전역 예외 처리 이벤트 구독 완료
+- ✅ `App.xaml.cs`의 `OnExit`에 리소스 정리 및 로그 기록 완료
+- ✅ `GlobalHookService`의 `HookCallback`에 예외 처리 추가 완료
+- ✅ 모든 파일 린터 검사 통과 완료
+- Phase 4.3 완료, 앱 안정성 및 로깅 시스템 구축 완료
+
+---
 
 ### 2026-02-05 (목) - Phase 4.2 완료: SettingsWindow 구현 및 트리거 버튼 동적 변경 (20차)
 **[목표]** **Phase 4.2**를 수행한다. API 키 설정뿐만 아니라 **트리거 버튼 변경**, **임시 폴더 열기** 기능을 포함한 **종합 설정 윈도우(SettingsWindow)**를 구현하고, `StackPanel.Spacing` 빌드 오류를 해결한다.

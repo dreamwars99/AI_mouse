@@ -140,6 +140,7 @@ graph TB
     subgraph "Helper Layer (Utilities)"
         NativeMethods[NativeMethods<br/>Win32 P/Invoke]
         DpiHelper[DpiHelper<br/>DPI 계산]
+        Logger[Logger<br/>파일 로깅]
     end
     
     MainWindow -->|DataBinding| MainVM
@@ -226,6 +227,10 @@ MessageBox.Show("AI Mouse가 백그라운드에서 실행되었습니다.\n트�
 - ✅ `SettingsViewModel` 및 `SettingsWindow` 구현 완료 (Phase 4.2)
 - ✅ 트리거 버튼 동적 변경 기능 구현 완료 (Phase 4.2)
 - ✅ API Key 설정 및 임시 폴더 열기 기능 구현 완료 (Phase 4.2)
+- ✅ `Logger` 유틸리티 구현 완료 (Phase 4.3)
+- ✅ 파일 로깅 시스템 구현 완료 (Phase 4.3)
+- ✅ 전역 예외 처리 구현 완료 (Phase 4.3)
+- ✅ `GlobalHookService` 예외 처리 안전장치 추가 완료 (Phase 4.3)
 
 ---
 
@@ -308,6 +313,7 @@ public interface IGlobalHookService : IDisposable
 - `Dispose()` 패턴으로 훅 해제 보장 ✅
 - **트리거 동적 변경:** `CurrentTrigger` 속성으로 런타임에 트리거 버튼 변경 가능 ✅ (Phase 4.2)
 - **기본 동작 차단:** 트리거 버튼의 Down/Up 이벤트 감지 시 `return 1`로 이벤트 전파 차단 ✅ (Phase 4.2)
+- **예외 처리 안전장치:** `HookCallback` 내부 모든 예외를 `try-catch`로 감싸고 `Logger.Error`로 기록 ✅ (Phase 4.3)
 
 ### 4.2. IScreenCaptureService ✅ 구현 완료
 지정된 화면 영역을 이미지로 캡처합니다.
@@ -435,15 +441,36 @@ HttpClient.PostAsync (Gemini 2.5 Flash API) ✅
 ```csharp
 protected override void OnExit(ExitEventArgs e)
 {
-    // GlobalHookService 중지 (훅 해제)
-    var hookService = _serviceProvider?.GetService<IGlobalHookService>();
-    hookService?.Stop();
+    try
+    {
+        // GlobalHookService 중지 (훅 해제)
+        var hookService = _serviceProvider?.GetService<IGlobalHookService>();
+        hookService?.Stop();
+        
+        // ServiceProvider가 IDisposable이면 Dispose 호출
+        if (_serviceProvider is IDisposable disposable)
+        {
+            disposable.Dispose();
+        }
+        
+        // 트레이 아이콘 정리
+        _trayIcon?.Dispose();
+        
+        // 앱 종료 로그 기록
+        Logger.Info("앱 종료됨");
+    }
+    catch (Exception ex)
+    {
+        Logger.Error("종료 처리 중 오류", ex);
+    }
     
-    // ServiceProvider에서 모든 IDisposable 서비스 해제
-    _serviceProvider?.Dispose();
     base.OnExit(e);
 }
 ```
+
+**전역 예외 처리:**
+- `DispatcherUnhandledException`: WPF 디스패처 예외 처리 (가능하면 앱 유지) ✅ (Phase 4.3)
+- `AppDomain.CurrentDomain.UnhandledException`: AppDomain 예외 처리 (복구 불가) ✅ (Phase 4.3)
 
 ### 6.2. 메모리 누수 방지
 
@@ -495,6 +522,7 @@ protected override void OnExit(ExitEventArgs e)
 | **ResultViewModel** | 응답 텍스트 및 로딩 상태 관리 | 없음 (순수 상태) |
 | **SettingsWindow** | 설정 UI 표시, API Key 입력, 트리거 버튼 선택, 임시 폴더 열기 | 없음 (순수 UI) ✅ (Phase 4.2) |
 | **SettingsViewModel** | 설정 상태 관리, API Key 저장, 트리거 버튼 변경 | IGlobalHookService ✅ (Phase 4.2) |
+| **Logger** | 파일 로깅, 예외 기록, 앱 생명주기 추적 | 없음 (순수 유틸리티) ✅ (Phase 4.3) |
 
 ---
 
@@ -510,4 +538,4 @@ protected override void OnExit(ExitEventArgs e)
 ---
 
 **Last Updated:** 2026-02-05  
-**Version:** 2.6 (Phase 4.2 완료: SettingsWindow 구현 및 트리거 버튼 동적 변경)
+**Version:** 2.7 (Phase 4.3 완료: 파일 로깅 시스템 및 전역 예외 처리 구현)

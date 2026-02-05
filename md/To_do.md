@@ -2,7 +2,7 @@
 
 ## 📋 현재 상태 요약 (Current Status Summary)
 
-**프로젝트 상태:** Phase 4.2 완료 ✅ (SettingsWindow 구현 및 트리거 버튼 동적 변경 완료)
+**프로젝트 상태:** Phase 4.3 완료 ✅ (파일 로깅 시스템 및 전역 예외 처리 구현 완료)
 
 **완료된 주요 기능:**
 - ✅ 프로젝트 생성 및 환경 설정 (.NET 8 WPF)
@@ -302,17 +302,25 @@
   - [x] 중복 실행 방지 로직 구현 ✅
   - [x] 저장 후 자동 창 닫기 기능 ✅
 
-#### Phase 4.3: 안정화 및 배포 (Stabilization)
-- [ ] **메모리 누수 점검**
-  - [ ] `Bitmap`, `Graphics` Dispose 확인
-  - [ ] Hook 해제 확인
-  - [ ] Audio Stream Dispose 확인
+#### Phase 4.3: 안정화 및 배포 (Stabilization) ✅ 완료
+- [x] **로깅 시스템 구축** ✅
+  - [x] `Helpers/Logger.cs` 생성 완료 (정적 클래스)
+  - [x] 파일 로깅 구현 완료 (`Path.GetTempPath()/AI_Mouse/logs/log_{날짜}.txt`)
+  - [x] `Info()`, `Error()` 메서드 구현 완료
+  - [x] 날짜별 파일 분리 완료 (하루 단위)
+  - [x] 스레드 안전성 보장 (`lock` 사용)
 
-- [ ] **로깅 시스템 구축**
-  - [ ] `Serilog` 또는 `NLog` 설치
-  - [ ] 로그 파일 저장 및 관리
+- [x] **전역 예외 처리** ✅
+  - [x] `DispatcherUnhandledException` 이벤트 구독 완료
+  - [x] `AppDomain.CurrentDomain.UnhandledException` 이벤트 구독 완료
+  - [x] 사용자 친화적 오류 메시지 제공 완료
+  - [x] `GlobalHookService` 예외 처리 안전장치 추가 완료
 
-- [ ] **Release 빌드 최적화**
+- [x] **리소스 관리 개선** ✅
+  - [x] `OnExit`에서 리소스 정리 및 로그 기록 완료
+  - [x] 모든 정리 작업에 예외 처리 추가 완료
+
+- [ ] **Release 빌드 최적화** (향후 작업)
   - [ ] 설치 파일 생성 (MSI 또는 ClickOnce)
   - [ ] 코드 서명 (선택 사항)
 
@@ -343,4 +351,4 @@
 
 ---
 
-**마지막 업데이트**: 2026-02-05 (Phase 4.2 완료: SettingsWindow 구현 및 트리거 버튼 동적 변경 완료)
+**마지막 업데이트**: 2026-02-05 (Phase 4.3 완료: 파일 로깅 시스템 및 전역 예외 처리 구현 완료)

@@ -63,6 +63,7 @@ AI_Mouse/
 ├── Helpers/                       # [Util] Win32 Interop, 컨버터 등 ✅ 생성됨
 │   ├── NativeMethods.cs           # [Phase 1.2] Win32 P/Invoke 선언 ✅ 생성됨
 │   ├── DpiHelper.cs               # [Phase 2.1] DPI 좌표 변환 유틸리티 ✅ 생성됨
+│   ├── Logger.cs                  # [Phase 4.3] 파일 로깅 유틸리티 ✅ 생성됨
 │   └── Converters/                # WPF Value Converter
 │       └── (필요 시 추가)
 │
@@ -120,6 +121,7 @@ graph TB
     subgraph "Helper Layer (Utilities)"
         NativeMethods[NativeMethods<br/>Win32 P/Invoke]
         DpiHelper[DpiHelper<br/>DPI 계산]
+        Logger[Logger<br/>파일 로깅]
     end
     
     MainWindow -->|DataBinding| MainVM
@@ -149,6 +151,8 @@ graph TB
 App.xaml.cs (Bootstrapper)
 │
 ├── OnStartup() ✅ 구현 완료
+│   ├── Logger 초기화 및 "App Started" 로그 기록 ✅ (Phase 4.3)
+│   ├── 전역 예외 처리 이벤트 구독 ✅ (Phase 4.3)
 │   ├── ServiceCollection 생성 ✅
 │   ├── Services 등록:
 │   │   ├── Transient: MainViewModel ✅
@@ -179,8 +183,10 @@ App.xaml.cs (Bootstrapper)
 │   └── Application.Current.Shutdown()
 │
 └── OnExit() ✅ 구현 완료
+    ├── 리소스 정리 (GlobalHookService, AudioRecorderService, HttpClient) ✅
     ├── TaskbarIcon.Dispose() ✅
-    └── ServiceProvider.Dispose() (리소스 정리) ✅
+    ├── ServiceProvider.Dispose() (리소스 정리) ✅
+    └── "App Stopped" 로그 기록 ✅ (Phase 4.3)
 
 ---
 
@@ -313,6 +319,7 @@ namespace AI_Mouse.Helpers
 {
     public static class NativeMethods { }
     public static class DpiHelper { }
+    public static class Logger { } // ✅ Phase 4.3 완료
 }
 ```
 
@@ -405,4 +412,4 @@ graph LR
 ---
 
 **Last Updated:** 2026-02-05  
-**Version:** 2.6 (Phase 4.2 완료: SettingsWindow 구현 및 트리거 버튼 동적 변경)
+**Version:** 2.7 (Phase 4.3 완료: 파일 로깅 시스템 및 전역 예외 처리 구현)
