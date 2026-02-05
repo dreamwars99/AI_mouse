@@ -17,6 +17,7 @@ namespace AI_Mouse.ViewModels
         private readonly IGlobalHookService _hookService;
         private readonly IScreenCaptureService _captureService;
         private readonly IAudioRecorderService _audioService;
+        private readonly IGeminiService _geminiService;
         private OverlayWindow? _overlayWindow;
         private OverlayViewModel? _overlayViewModel;
 
@@ -24,17 +25,22 @@ namespace AI_Mouse.ViewModels
         private int _dragStartX;
         private int _dragStartY;
 
+        // TODO: 여기에 Google AI Studio API Key를 입력하세요
+        private const string ApiKey = "";
+
         /// <summary>
         /// MainViewModel 생성자
         /// </summary>
         /// <param name="hookService">전역 마우스 훅 서비스 (DI 주입)</param>
         /// <param name="captureService">화면 캡처 서비스 (DI 주입)</param>
         /// <param name="audioService">오디오 녹음 서비스 (DI 주입)</param>
-        public MainViewModel(IGlobalHookService hookService, IScreenCaptureService captureService, IAudioRecorderService audioService)
+        /// <param name="geminiService">Gemini API 서비스 (DI 주입)</param>
+        public MainViewModel(IGlobalHookService hookService, IScreenCaptureService captureService, IAudioRecorderService audioService, IGeminiService geminiService)
         {
             _hookService = hookService ?? throw new ArgumentNullException(nameof(hookService));
             _captureService = captureService ?? throw new ArgumentNullException(nameof(captureService));
             _audioService = audioService ?? throw new ArgumentNullException(nameof(audioService));
+            _geminiService = geminiService ?? throw new ArgumentNullException(nameof(geminiService));
 
             // 마우스 액션 이벤트 구독
             _hookService.MouseAction += OnMouseAction;
@@ -215,12 +221,43 @@ namespace AI_Mouse.ViewModels
                         // 오디오 녹음 오류는 무시하고 계속 진행
                     }
 
-                    // 검증용 메시지 박스 출력 (오디오 경로 포함)
-                    MessageBox.Show(
-                        $"캡처 및 녹음 완료!\n이미지: 클립보드\n오디오: {audioPath}",
-                        "캡처 성공",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Information);
+                    // Gemini API 호출
+                    if (string.IsNullOrWhiteSpace(ApiKey))
+                    {
+                        MessageBox.Show(
+                            "API 키를 설정해주세요.",
+                            "API 키 필요",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Warning);
+                        return;
+                    }
+
+                    try
+                    {
+                        // Gemini API 호출
+                        string response = await _geminiService.GetResponseAsync(capturedImage, audioPath, ApiKey);
+
+                        // 결과를 클립보드에 복사
+                        Clipboard.SetText(response);
+
+                        // 결과를 메시지 박스로 출력
+                        MessageBox.Show(
+                            $"Gemini 응답:\n\n{response}\n\n(결과가 클립보드에 복사되었습니다.)",
+                            "Gemini 응답",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Information);
+
+                        Debug.WriteLine($"[MainViewModel] Gemini API 응답 수신 완료");
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"[MainViewModel] Gemini API 호출 중 오류: {ex.Message}");
+                        MessageBox.Show(
+                            $"Gemini API 호출 중 오류가 발생했습니다:\n{ex.Message}",
+                            "API 오류",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Error);
+                    }
 
                     Debug.WriteLine($"[MainViewModel] 화면 캡처 및 클립보드 복사 완료: {finalRect.Width}x{finalRect.Height}");
                 }

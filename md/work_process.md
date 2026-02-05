@@ -4,7 +4,7 @@
 - **Role:** Lead Architect & Cursor AI
 - **Framework:** .NET 8 (WPF)
 - **Platform:** Windows 10 / 11 Desktop
-- **Last Updated:** 2026-02-05 (DpiHelper 네임스페이스 별칭 적용 완료 - 타입 모호성 해결)
+- **Last Updated:** 2026-02-05 (Phase 3.1 Gemini API 연동 완료 - HttpClient 기반 Gemini 1.5 Pro API 통신 서비스 구현)
 
 ## 📌 1. Development Environment (개발 환경 상세)
 이 프로젝트를 이어받는 AI/개발자는 아래 설정을 필수로 확인해야 합니다.
@@ -21,8 +21,12 @@
 - **NAudio** ✅ (Phase 2.2 완료)
   - Purpose: 마이크 오디오 녹음 및 WAV 파일 저장
   - Version: 2.2.1
-- **Google.Cloud.AIPlatform** (Phase 3 예정)
-  - Purpose: Gemini API 연동 (Multimodal Input)
+- **Newtonsoft.Json** ✅ (Phase 3.1 완료)
+  - Purpose: Gemini API 요청/응답 JSON 직렬화/역직렬화
+  - Version: 13.0.3
+- **HttpClient** ✅ (Phase 3.1 완료)
+  - Purpose: Gemini API HTTP 통신 (System.Net.Http)
+  - Built-in (.NET Framework)
 
 ### 1.2. Project Settings
 - **Target OS:** Windows 10.0.19041.0 이상
@@ -61,13 +65,100 @@ AI_Mouse/
 - **States:** `Idle` (대기) -> `Listening` (드래그 중) -> `Processing` (AI 요청 중) -> `Result` (결과 표시).
 - **Flow:** Hook 이벤트 수신 -> Overlay 활성화 -> 캡처/녹음 지시 -> Gemini 전송 -> 결과 바인딩.
 
-**Services (To Be Implemented)**
-- `GlobalHookService`: 마우스/키보드 전역 이벤트 감지 (User32.dll).
-- `ScreenCaptureService`: GDI+를 이용한 화면 캡처.
-- `AudioRecorderService`: NAudio 기반 음성 녹음.
+**Services (Implemented)**
+- `GlobalHookService`: 마우스/키보드 전역 이벤트 감지 (User32.dll) ✅
+- `ScreenCaptureService`: GDI+를 이용한 화면 캡처 ✅
+- `AudioRecorderService`: NAudio 기반 음성 녹음 ✅
+- `GeminiService`: HttpClient 기반 Gemini 1.5 Pro API 통신 ✅
 
 
 ## 📅 4. Development Log (개발 기록)
+
+### 2026-02-05 (목) - Phase 3.1 Gemini API 연동 완료: HttpClient 기반 Gemini 1.5 Pro API 통신 서비스 구현 (13차)
+**[목표]** `HttpClient`를 사용하여 **Gemini 1.5 Pro API**와 통신하는 서비스를 구현하고, 캡처된 이미지와 녹음된 오디오를 멀티모달 요청으로 전송하여 AI 응답을 받는 기능을 완성.
+
+#### Dev Action (Gemini API Service Implementation)
+- **AI_Mouse.csproj 수정:**
+  - `Newtonsoft.Json` NuGet 패키지 추가 (v13.0.3)
+  - JSON 직렬화/역직렬화를 위한 필수 패키지
+
+- **Services/Interfaces/IGeminiService.cs 생성:**
+  - `IGeminiService` 인터페이스 정의
+  - `GetResponseAsync(BitmapSource image, string audioPath, string apiKey)` 메서드 정의
+  - 간결한 인터페이스 설계 (멀티모달 입력 처리)
+
+- **Services/Implementations/GeminiService.cs 생성:**
+  - `IGeminiService` 인터페이스 구현
+  - 생성자에서 `HttpClient` 주입 (DI)
+  - `GetResponseAsync` 구현:
+    - 이미지 변환: `BitmapSource` → JPEG Encoder → Byte[] → Base64
+    - 오디오 변환: 파일 경로에서 Byte[] 읽기 → Base64
+    - JSON 요청 본문 생성:
+      - 텍스트 프롬프트: "당신은 윈도우 AI 비서입니다. 화면과 음성을 보고 한국어로 답변하세요."
+      - 이미지: `inline_data` 형식 (`mime_type: "image/jpeg"`)
+      - 오디오: `inline_data` 형식 (`mime_type: "audio/wav"`)
+    - API 엔드포인트: `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key={apiKey}`
+    - `HttpClient.PostAsync` 사용하여 HTTP POST 요청
+    - 응답 파싱: `Newtonsoft.Json`으로 JSON 역직렬화
+    - 응답 텍스트 추출 및 반환
+  - DTO 클래스: `GeminiService` 클래스 내부에 `private class`로 Request/Response 구조체 정의
+    - `GeminiRequest`, `Content`, `Part`, `InlineData` (요청용)
+    - `GeminiResponse`, `Candidate` (응답용)
+  - 에러 처리:
+    - `HttpRequestException` 처리 및 사용자 친화적 메시지 반환
+    - API 키 검증 (빈 문자열 체크)
+    - 파일 존재 여부 확인 (오디오 파일)
+
+- **ViewModels/MainViewModel.cs 수정:**
+  - 생성자에 `IGeminiService` 주입 추가 (`_geminiService` 필드)
+  - API Key 상수 선언:
+    - `private const string ApiKey = "";` (빈 문자열)
+    - TODO 주석: "여기에 Google AI Studio API Key를 입력하세요"
+  - `HandleMouseUp` 메서드 수정:
+    - 캡처/녹음 완료 후 `_geminiService.GetResponseAsync` 호출
+    - API Key 검증: 비어있으면 "API 키를 설정해주세요" 메시지 출력
+    - 결과 처리:
+      - 응답 텍스트를 `Clipboard.SetText()`로 클립보드 복사
+      - `MessageBox.Show()`로 응답 텍스트 출력
+    - 예외 처리: API 호출 실패 시 사용자 친화적 에러 메시지 표시
+
+- **App.xaml.cs 수정:**
+  - `HttpClient` 싱글톤 등록 추가 (`services.AddSingleton<HttpClient>()`)
+  - `IGeminiService` → `GeminiService` 싱글톤 등록 추가
+  - `GeminiService` 생성자에 `HttpClient` 자동 주입
+  - `OnExit` 메서드 수정:
+    - `HttpClient` Dispose 호출 추가 (리소스 정리)
+    - 예외 처리 추가
+
+#### Tech Details
+- **Gemini 1.5 Pro 모델:** 반드시 `gemini-1.5-pro` 엔드포인트 사용 (사용자 요구사항 준수)
+- **멀티모달 입력:** 이미지(JPEG)와 오디오(WAV)를 동시에 전송하여 컨텍스트 풍부한 질의 가능
+- **Base64 인코딩:** 이미지와 오디오를 Base64 문자열로 변환하여 JSON에 포함
+- **JSON 구조:** Gemini API 표준 형식 준수 (`contents[0].parts[]` 배열 구조)
+- **비동기 처리:** `async/await` 패턴으로 UI 응답성 유지
+- **에러 처리:** `HttpRequestException`을 잡아 사용자 친화적 메시지 제공
+- **리소스 관리:** `HttpClient` 싱글톤 사용 및 종료 시 Dispose 보장
+- **파일 간소화:** DTO 클래스를 별도 파일이 아닌 `GeminiService` 내부 `private class`로 정의
+
+#### Current Status
+- ✅ `Newtonsoft.Json` 패키지 설치 완료 (v13.0.3)
+- ✅ `IGeminiService.cs` 생성 완료 (인터페이스 정의)
+- ✅ `GeminiService.cs` 생성 완료 (HttpClient 기반 API 통신 구현)
+- ✅ 이미지 Base64 변환 로직 구현 완료 (BitmapSource → JPEG → Base64)
+- ✅ 오디오 Base64 변환 로직 구현 완료 (파일 경로 → Byte[] → Base64)
+- ✅ JSON 요청 본문 생성 로직 구현 완료 (텍스트 + 이미지 + 오디오)
+- ✅ `HttpClient.PostAsync` 사용하여 API 호출 구현 완료
+- ✅ 응답 파싱 및 텍스트 추출 로직 구현 완료
+- ✅ DTO 클래스를 `GeminiService` 내부 `private class`로 정의 완료
+- ✅ `MainViewModel`에 `IGeminiService` 주입 및 API 호출 로직 구현 완료
+- ✅ API Key 상수 선언 및 검증 로직 구현 완료
+- ✅ 결과 클립보드 복사 및 MessageBox 출력 로직 구현 완료
+- ✅ `App.xaml.cs`에 `HttpClient` 및 `IGeminiService` 싱글톤 등록 완료
+- ✅ `OnExit`에서 `HttpClient` Dispose 호출 추가 완료
+- ✅ 에러 처리 및 사용자 친화적 메시지 구현 완료
+- Phase 3.1 완전히 완료, 다음 단계: Phase 4.1 결과 뷰어 (Result Window) 구현 준비
+
+---
 
 ### 2026-02-05 (목) - DpiHelper 네임스페이스 별칭 적용 및 타입 모호성 해결 (12차)
 **[목표]** `System.Drawing.Point`와 `System.Windows.Point` 간의 모호함(CS0104)을 해결하기 위해 네임스페이스 별칭(Alias)을 적용하여 컴파일 에러를 제거하고 타입 의도를 명확히 함.

@@ -54,12 +54,12 @@ sequenceDiagram
     deactivate Audio
     
     activate VM
-    VM->>AI: SendMultimodalQuery(image, audio, prompt)
+    VM->>AI: GetResponseAsync(image, audioPath, apiKey) ✅
     deactivate VM
     
     activate AI
-    AI->>AI: Gemini API 호출 (비동기)
-    AI-->>VM: Response 텍스트
+    AI->>AI: HttpClient.PostAsync (Gemini 1.5 Pro API) ✅
+    AI-->>VM: Response 텍스트 ✅
     deactivate AI
     
     activate VM
@@ -204,6 +204,9 @@ MessageBox.Show("AI Mouse가 백그라운드에서 실행되었습니다.\n트�
 - ✅ `IAudioRecorderService` 및 `AudioRecorderService` 구현 완료 (Phase 2.2)
 - ✅ NAudio 패키지 설치 완료 (Phase 2.2)
 - ✅ 마이크 음성 녹음 및 WAV 파일 저장 기능 구현 완료 (Phase 2.2)
+- ✅ `IGeminiService` 및 `GeminiService` 구현 완료 (Phase 3.1)
+- ✅ Newtonsoft.Json 패키지 설치 완료 (Phase 3.1)
+- ✅ HttpClient 기반 Gemini 1.5 Pro API 통신 기능 구현 완료 (Phase 3.1)
 
 ---
 
@@ -236,9 +239,9 @@ stateDiagram-v2
     
     note right of Processing
         OverlayWindow 숨김
-        ScreenCapture 실행
-        AudioRecorder 중지
-        GeminiService 호출
+        ScreenCapture 실행 ✅
+        AudioRecorder 중지 ✅
+        GeminiService 호출 ✅
     end note
     
     note right of Result
@@ -318,26 +321,25 @@ public interface IAudioRecorderService : IDisposable
 - `TaskCompletionSource`를 사용한 비동기 처리 ✅
 - `WaveFileWriter` Dispose로 파일 잠금 해제 보장 ✅
 
-### 4.4. IGeminiService
+### 4.4. IGeminiService ✅ 구현 완료
 Google Gemini API와 통신합니다.
 
 ```csharp
 public interface IGeminiService
 {
-    Task<string> SendMultimodalQueryAsync(
-        BitmapSource image, 
-        string audioFilePath, 
-        string? userPrompt = null);
-    
-    void SetApiKey(string apiKey);
-    bool IsConfigured { get; }
+    Task<string> GetResponseAsync(BitmapSource image, string audioPath, string apiKey);
 }
 ```
 
 **구현 세부사항:**
-- Google.GenerativeAI SDK 사용
-- 멀티모달 입력 (이미지 + 오디오)
-- 비동기 처리 및 예외 처리 (재시도 로직)
+- `HttpClient` 사용 (Singleton) ✅
+- 엔드포인트: `gemini-1.5-pro` 모델 사용 ✅
+- 멀티모달 입력 (이미지 + 오디오) ✅
+- 이미지: `BitmapSource` → JPEG Encoder → Byte[] → Base64 변환 ✅
+- 오디오: 파일 경로에서 Byte[] 읽기 → Base64 변환 ✅
+- JSON 구조: `contents[0].parts[]` 배열 형식 (텍스트 + 이미지 + 오디오) ✅
+- 비동기 처리 및 예외 처리 (`HttpRequestException` 처리) ✅
+- DTO 클래스: `GeminiService` 내부에 `private class`로 정의 ✅
 
 ---
 
@@ -358,7 +360,11 @@ BitmapSource 변환 (WPF 호환) ✅
     ↓
 Clipboard.SetImage (클립보드 복사) ✅
     ↓
-[Phase 3.1 예정] GeminiService.SendMultimodalQueryAsync(image, audio, prompt)
+GeminiService.GetResponseAsync(image, audioPath, apiKey) ✅
+    ↓
+HttpClient.PostAsync (Gemini 1.5 Pro API) ✅
+    ↓
+응답 텍스트 반환 ✅
 ```
 
 ### 5.2. 오디오 데이터 흐름
@@ -376,7 +382,13 @@ WAV 파일로 저장 (Path.GetTempPath()/AI_Mouse/audio_temp.wav) ✅
     ↓
 파일 경로 반환 ✅
     ↓
-[Phase 3.1 예정] GeminiService.SendMultimodalQueryAsync(image, audioPath, prompt)
+GeminiService.GetResponseAsync(image, audioPath, apiKey) ✅
+    ↓
+Base64 인코딩 (이미지 + 오디오) ✅
+    ↓
+JSON 요청 본문 생성 ✅
+    ↓
+HttpClient.PostAsync (Gemini 1.5 Pro API) ✅
 ```
 
 ---
@@ -463,4 +475,4 @@ protected override void OnExit(ExitEventArgs e)
 ---
 
 **Last Updated:** 2026-02-05  
-**Version:** 1.8 (DpiHelper 네임스페이스 별칭 적용 완료 - 타입 모호성 해결)
+**Version:** 1.9 (Phase 3.1 Gemini API 연동 완료 - HttpClient 기반 Gemini 1.5 Pro API 통신 서비스 구현)

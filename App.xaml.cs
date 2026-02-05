@@ -8,6 +8,7 @@ using AI_Mouse.ViewModels;
 using System.Drawing;
 using AI_Mouse.Services.Interfaces;
 using AI_Mouse.Services.Implementations;
+using System.Net.Http;
 
 namespace AI_Mouse
 {
@@ -47,29 +48,35 @@ namespace AI_Mouse
             // 6. AudioRecorderService를 싱글톤으로 등록
             services.AddSingleton<IAudioRecorderService, AudioRecorderService>();
 
-            // 7. ServiceProvider 빌드
+            // 7. HttpClient를 싱글톤으로 등록
+            services.AddSingleton<HttpClient>();
+
+            // 8. GeminiService를 싱글톤으로 등록 (HttpClient 주입)
+            services.AddSingleton<IGeminiService, GeminiService>();
+
+            // 9. ServiceProvider 빌드
             _serviceProvider = services.BuildServiceProvider();
 
-            // 8. MainWindow 인스턴스를 DI로 생성
+            // 10. MainWindow 인스턴스를 DI로 생성
             var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
 
-            // 9. MainViewModel을 DI로 생성 (IGlobalHookService, IScreenCaptureService, IAudioRecorderService 자동 주입)
+            // 11. MainViewModel을 DI로 생성 (IGlobalHookService, IScreenCaptureService, IAudioRecorderService, IGeminiService 자동 주입)
             var mainViewModel = _serviceProvider.GetRequiredService<MainViewModel>();
 
-            // 10. MainWindow.DataContext에 MainViewModel 설정
+            // 12. MainWindow.DataContext에 MainViewModel 설정
             mainWindow.DataContext = mainViewModel;
 
-            // 11. MainWindow를 숨김 상태로 유지 (초기 상태)
+            // 13. MainWindow를 숨김 상태로 유지 (초기 상태)
             mainWindow.Hide();
 
-            // 12. OverlayWindow를 미리 생성하되 Hide() 상태로 대기 (반응 속도 최적화)
+            // 14. OverlayWindow를 미리 생성하되 Hide() 상태로 대기 (반응 속도 최적화)
             _overlayWindow = _serviceProvider.GetRequiredService<OverlayWindow>();
             _overlayWindow.Hide();
 
-            // 13. MainViewModel에 OverlayWindow 참조 전달 (Show/Hide를 위해 필요)
+            // 15. MainViewModel에 OverlayWindow 참조 전달 (Show/Hide를 위해 필요)
             mainViewModel.SetOverlayWindow(_overlayWindow);
 
-            // 14. 리소스에서 TaskbarIcon을 찾아 _trayIcon 멤버 변수에 할당
+            // 16. 리소스에서 TaskbarIcon을 찾아 _trayIcon 멤버 변수에 할당
             _trayIcon = (TaskbarIcon)FindResource("TrayIcon");
             
             // 빈 아이콘 에러 방지를 위해 System.Drawing.SystemIcons.Application 할당
@@ -78,7 +85,7 @@ namespace AI_Mouse
                 _trayIcon.Icon = SystemIcons.Application;
             }
 
-            // 15. GlobalHookService를 가져와서 훅 시작
+            // 17. GlobalHookService를 가져와서 훅 시작
             var hookService = _serviceProvider.GetRequiredService<IGlobalHookService>();
             hookService.Start();
 
@@ -117,6 +124,17 @@ namespace AI_Mouse
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"[App] 오디오 서비스 정리 중 오류: {ex.Message}");
+                }
+
+                try
+                {
+                    // HttpClient 정리
+                    var httpClient = _serviceProvider.GetService<HttpClient>();
+                    httpClient?.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[App] HttpClient 정리 중 오류: {ex.Message}");
                 }
             }
 

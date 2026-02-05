@@ -46,14 +46,14 @@ AI_Mouse/
 │   │   ├── IGlobalHookService.cs          # [Phase 1.2] 전역 입력 감지 ✅ 생성됨
 │   │   ├── IScreenCaptureService.cs       # [Phase 2.1] 화면 캡처 ✅ 생성됨
 │   │   ├── IAudioRecorderService.cs       # [Phase 2.2] 음성 녹음 ✅ 생성됨
-│   │   ├── IGeminiService.cs              # [Phase 3.1] Gemini API ⏳ 생성 예정
+│   │   ├── IGeminiService.cs              # [Phase 3.1] Gemini API ✅ 생성됨
 │   │   └── ITrayService.cs                # 트레이 아이콘 관리 ⏳ 생성 예정
 │   │
 │   └── Implementations/           # 서비스 구현체 ✅ 생성됨
 │       ├── GlobalHookService.cs            # [Phase 1.2] Win32 Hook 구현 ✅ 생성됨
 │       ├── ScreenCaptureService.cs        # [Phase 2.1] GDI+ 캡처 구현 ✅ 생성됨
 │       ├── AudioRecorderService.cs        # [Phase 2.2] NAudio 녹음 구현 ✅ 생성됨
-│       ├── GeminiService.cs               # [Phase 3.1] API 클라이언트 구현 ⏳ 생성 예정
+│       ├── GeminiService.cs               # [Phase 3.1] HttpClient API 클라이언트 구현 ✅ 생성됨
 │       └── TrayService.cs                 # 트레이 아이콘 구현 ⏳ 생성 예정
 │
 ├── Models/                        # [Data] 데이터 구조 (DTO) ⏳ 생성 예정
@@ -159,7 +159,9 @@ App.xaml.cs (Bootstrapper)
 │   │   ├── Transient: OverlayWindow ✅ (Phase 1.3)
 │   │   ├── Singleton: IGlobalHookService → GlobalHookService ✅
 │   │   ├── Singleton: IScreenCaptureService → ScreenCaptureService ✅ (Phase 2.1)
-│   │   └── Singleton: IAudioRecorderService → AudioRecorderService ✅ (Phase 2.2)
+│   │   ├── Singleton: IAudioRecorderService → AudioRecorderService ✅ (Phase 2.2)
+│   │   ├── Singleton: HttpClient ✅ (Phase 3.1)
+│   │   └── Singleton: IGeminiService → GeminiService ✅ (Phase 3.1)
 │   │
 │   ├── ServiceProvider 빌드 ✅
 │   ├── MainWindow 인스턴스 생성 (DI) ✅
@@ -246,7 +248,8 @@ App.xaml.cs (Bootstrapper)
        ├── OverlayViewModel.Reset() ✅
        ├── ScreenCaptureService.CaptureRegionAsync() ✅ (Phase 2.1)
        ├── AudioRecorderService.StopRecordingAsync() ✅ (Phase 2.2)
-       └── GeminiService.SendMultimodalQueryAsync() (Phase 3.1 예정)
+       ├── GeminiService.GetResponseAsync() ✅ (Phase 3.1)
+       └── Clipboard.SetText() + MessageBox.Show() ✅ (Phase 3.1)
            └── ResultWindow.Show(response) (Phase 4.1 예정)
 ```
 
@@ -282,7 +285,7 @@ namespace AI_Mouse.Services.Interfaces
     public interface IGlobalHookService : IDisposable { }
     public interface IScreenCaptureService { }
     public interface IAudioRecorderService : IDisposable { }
-    public interface IGeminiService { }
+    public interface IGeminiService { } // ✅ Phase 3.1 완료
     public interface ITrayService { }
 }
 
@@ -291,7 +294,7 @@ namespace AI_Mouse.Services.Implementations
     public class GlobalHookService : IGlobalHookService { }
     public class ScreenCaptureService : IScreenCaptureService { }
     public class AudioRecorderService : IAudioRecorderService { }
-    public class GeminiService : IGeminiService { }
+    public class GeminiService : IGeminiService { } // ✅ Phase 3.1 완료
     public class TrayService : ITrayService { }
 }
 
@@ -399,4 +402,4 @@ graph LR
 ---
 
 **Last Updated:** 2026-02-05  
-**Version:** 1.8 (DpiHelper 네임스페이스 별칭 적용 완료 - 타입 모호성 해결)
+**Version:** 1.9 (Phase 3.1 Gemini API 연동 완료 - HttpClient 기반 Gemini 1.5 Pro API 통신 서비스 구현)

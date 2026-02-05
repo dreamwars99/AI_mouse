@@ -2,7 +2,7 @@
 
 ## 📋 현재 상태 요약 (Current Status Summary)
 
-**프로젝트 상태:** Phase 2.2 완료 ✅ (NAudio 기반 마이크 음성 녹음 서비스 구현 완료)
+**프로젝트 상태:** Phase 3.1 완료 ✅ (HttpClient 기반 Gemini 1.5 Pro API 통신 서비스 구현 완료)
 
 **완료된 주요 기능:**
 - ✅ 프로젝트 생성 및 환경 설정 (.NET 8 WPF)
@@ -20,6 +20,9 @@
 - ✅ NAudio 패키지 설치 완료 (v2.2.1)
 - ✅ 오디오 녹음 서비스 구현 완료 (IAudioRecorderService, AudioRecorderService)
 - ✅ 마이크 음성 녹음 및 WAV 파일 저장 기능 구현 완료
+- ✅ Newtonsoft.Json 패키지 설치 완료 (v13.0.3)
+- ✅ Gemini API 서비스 구현 완료 (IGeminiService, GeminiService)
+- ✅ HttpClient 기반 Gemini 1.5 Pro API 통신 기능 구현 완료
 
 ---
 
@@ -127,6 +130,23 @@
 - ✅ `App.xaml.cs`에 `IAudioRecorderService` 싱글톤 등록 완료
 - ✅ `OnExit`에서 `AudioRecorderService` Dispose 호출 추가 완료
 
+### Phase 3.1: Gemini API 연동 (Intelligence Layer) ✅ 완료
+- ✅ `Newtonsoft.Json` 패키지 설치 완료 (v13.0.3)
+- ✅ `Services/Interfaces/IGeminiService.cs` 생성 완료 (인터페이스 정의)
+- ✅ `Services/Implementations/GeminiService.cs` 생성 완료 (HttpClient 기반 API 통신)
+- ✅ 이미지 Base64 변환 로직 구현 완료 (`BitmapSource` → JPEG → Base64)
+- ✅ 오디오 Base64 변환 로직 구현 완료 (파일 경로 → Byte[] → Base64)
+- ✅ JSON 요청 본문 생성 로직 구현 완료 (텍스트 + 이미지 + 오디오)
+- ✅ `HttpClient.PostAsync` 사용하여 API 호출 구현 완료
+- ✅ 응답 파싱 및 텍스트 추출 로직 구현 완료
+- ✅ DTO 클래스를 `GeminiService` 내부 `private class`로 정의 완료
+- ✅ `MainViewModel`에 `IGeminiService` 주입 및 API 호출 로직 구현 완료
+- ✅ API Key 상수 선언 및 검증 로직 구현 완료 (`private const string ApiKey = "";`)
+- ✅ 결과 클립보드 복사 및 MessageBox 출력 로직 구현 완료
+- ✅ `App.xaml.cs`에 `HttpClient` 및 `IGeminiService` 싱글톤 등록 완료
+- ✅ `OnExit`에서 `HttpClient` Dispose 호출 추가 완료
+- ✅ 에러 처리 및 사용자 친화적 메시지 구현 완료
+
 ---
 
 ## 🧊 Backlog (예정된 작업)
@@ -211,18 +231,19 @@
 
 ### 🟢 Low Priority (낮은 우선순위)
 
-#### Phase 3.1: Gemini API 연동 (Intelligence Layer)
-- [ ] **Google Generative AI SDK 설치**
-  - [ ] `Google.GenerativeAI` 또는 `Google.Cloud.AIPlatform` NuGet 패키지 설치
+#### Phase 3.1: Gemini API 연동 (Intelligence Layer) ✅ 완료
+- [x] **Newtonsoft.Json 패키지 설치** ✅
+  - [x] `Newtonsoft.Json` NuGet 패키지 설치 ✅ (v13.0.3)
 
-- [ ] **GeminiService 구현**
-  - [ ] `Services/Interfaces/IGeminiService.cs` 생성
-  - [ ] `Services/Implementations/GeminiService.cs` 구현
-  - [ ] API Key 보안 처리 (UserSecrets 또는 암호화 파일)
-  - [ ] 멀티모달 요청 생성 (`GenerateContent` with Image, Audio, Prompt)
-  - [ ] System Prompt 튜닝
-  - [ ] 비동기 처리 (`async/await`)
-  - [ ] 예외 처리 및 재시도 로직
+- [x] **GeminiService 구현** ✅
+  - [x] `Services/Interfaces/IGeminiService.cs` 생성 ✅
+  - [x] `Services/Implementations/GeminiService.cs` 구현 ✅
+  - [x] HttpClient 기반 API 통신 구현 ✅
+  - [x] 멀티모달 요청 생성 (Image, Audio, Prompt) ✅
+  - [x] System Prompt 설정 ("당신은 윈도우 AI 비서입니다...") ✅
+  - [x] 비동기 처리 (`async/await`) ✅
+  - [x] 예외 처리 (`HttpRequestException`) ✅
+  - [x] DTO 클래스 정의 (GeminiService 내부 private class) ✅
 
 #### Phase 4.1: 결과 뷰어 (Result Window)
 - [ ] **ResultWindow 구현**
@@ -281,4 +302,4 @@
 
 ---
 
-**마지막 업데이트**: 2026-02-05 (Phase 2.2 완료 - NAudio 기반 마이크 음성 녹음 서비스 구현 완료)
+**마지막 업데이트**: 2026-02-05 (Phase 3.1 완료 - HttpClient 기반 Gemini 1.5 Pro API 통신 서비스 구현 완료)
