@@ -82,6 +82,16 @@ namespace AI_Mouse.Views
         }
 
         /// <summary>
+        /// 마우스 휠 이벤트 핸들러 (포커스 여부와 상관없이 휠 감지)
+        /// </summary>
+        private void Window_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            // 마우스 휠 움직임을 ScrollViewer에 강제로 전달
+            MainScrollViewer.ScrollToVerticalOffset(MainScrollViewer.VerticalOffset - e.Delta);
+            e.Handled = true; // 이벤트 처리 완료 표시
+        }
+
+        /// <summary>
         /// 창이 표시될 때 마우스 커서 근처 또는 우측 하단에 위치시킵니다
         /// </summary>
         protected override void OnSourceInitialized(EventArgs e)

@@ -4,7 +4,7 @@
 - **Role:** Lead Architect & Cursor AI
 - **Framework:** .NET 8 (WPF)
 - **Platform:** Windows 10 / 11 Desktop
-- **Last Updated:** 2026-02-05 (ResultWindow UX 개선 완료: 항상 위 해제, 최소화 버튼, 스크롤 포커스 수정, 18차)
+- **Last Updated:** 2026-02-05 (ResultWindow 스크롤 포커스 문제 해결: PreviewMouseWheel 이벤트 터널링, 19차)
 
 ## 📌 1. Development Environment (개발 환경 상세)
 이 프로젝트를 이어받는 AI/개발자는 아래 설정을 필수로 확인해야 합니다.
@@ -87,6 +87,55 @@ AI_Mouse/
 
 
 ****## 📅 4. Development Log (개발 기록)
+
+### 2026-02-05 (목) - ResultWindow 스크롤 포커스 문제 해결: PreviewMouseWheel 이벤트 터널링 (19차)
+**[목표]** **ResultWindow**의 스크롤이 마우스 오버 시 즉시 작동하도록 이벤트 터널링을 구현하고, `Topmost` 옵션을 확실하게 해제하여 사용자 경험을 개선.
+
+#### Dev Action (ResultWindow Scroll Focus Fix)
+- **Views/ResultWindow.xaml 수정:**
+  - `Topmost="False"` 명시적 설정:
+    - 항상 위 기능을 확실하게 해제하여 다른 창 뒤로 이동 가능하도록 보장
+    - 이전에 속성이 제거되었지만 명시적으로 `False`로 설정하여 확실하게 적용
+  - `PreviewMouseWheel="Window_PreviewMouseWheel"` 이벤트 추가:
+    - Window 레벨에서 마우스 휠 이벤트를 터널링으로 캡처
+    - 포커스 여부와 상관없이 창 위에 마우스가 있을 때 휠 이벤트 감지
+    - 이벤트 라우팅의 터널링 단계에서 처리하여 하위 요소로 전파 전에 가로채기
+  - `ScrollViewer`에 `x:Name="MainScrollViewer"` 추가:
+    - 코드 비하인드에서 ScrollViewer를 직접 제어할 수 있도록 이름 부여
+    - `ScrollToVerticalOffset()` 메서드를 호출하여 프로그래밍 방식으로 스크롤 제어
+
+- **Views/ResultWindow.xaml.cs 수정:**
+  - `Window_PreviewMouseWheel` 이벤트 핸들러 구현:
+    - `MainScrollViewer.ScrollToVerticalOffset(MainScrollViewer.VerticalOffset - e.Delta)` 호출
+    - 마우스 휠 델타 값을 현재 스크롤 위치에서 빼서 위로 스크롤 (양수 델타) 또는 아래로 스크롤 (음수 델타)
+    - `e.Handled = true` 설정으로 이벤트 처리 완료 표시 및 하위 요소로의 전파 방지
+    - 포커스 상태와 무관하게 창 위에 마우스가 있을 때 즉시 스크롤 작동
+  - 타이틀 바 드래그 기능 유지:
+    - 기존 `TitleBar_MouseLeftButtonDown` 로직은 그대로 유지
+    - 파란색 타이틀 바를 잡았을 때만 창 이동 가능
+
+- **md/To_do.md 업데이트:**
+  - Phase 4.1 섹션에 "결과창 스크롤 포커스 문제 해결 완료 (PreviewMouseWheel 적용)" 항목 추가 및 완료 처리
+
+#### Tech Details
+- **이벤트 터널링:** `PreviewMouseWheel` 이벤트를 사용하여 이벤트 라우팅의 터널링 단계에서 처리
+- **포커스 독립적 스크롤:** 포커스 상태와 상관없이 창 위에 마우스가 있을 때 휠 스크롤 작동
+- **명시적 Topmost 해제:** `Topmost="False"`로 명시적으로 설정하여 항상 위 기능 확실히 해제
+- **프로그래밍 방식 스크롤:** `ScrollToVerticalOffset()` 메서드로 스크롤 위치 직접 제어
+- **이벤트 처리 완료:** `e.Handled = true`로 이벤트 전파 방지 및 중복 처리 방지
+
+#### Current Status
+- ✅ `ResultWindow.xaml`에 `Topmost="False"` 명시적 설정 완료
+- ✅ `ResultWindow.xaml`에 `PreviewMouseWheel="Window_PreviewMouseWheel"` 이벤트 추가 완료
+- ✅ `ScrollViewer`에 `x:Name="MainScrollViewer"` 추가 완료
+- ✅ `ResultWindow.xaml.cs`에 `Window_PreviewMouseWheel` 핸들러 구현 완료 (`ScrollToVerticalOffset` 사용)
+- ✅ `e.Handled = true` 설정으로 이벤트 처리 완료 표시 완료
+- ✅ `To_do.md`에 완료 항목 추가 완료
+- ✅ Linter 에러 없음 확인 완료
+- ResultWindow 스크롤 포커스 문제 해결 완료, 마우스 오버 시 즉시 스크롤 작동
+
+---
+
 
 ### 2026-02-05 (목) - ResultWindow UX 개선: 항상 위 해제, 최소화 버튼, 스크롤 포커스 수정 (18차)
 **[목표]** **ResultWindow**의 UX를 개선한다. 항상 위 기능을 해제하여 다른 창 뒤로 이동 가능하게 하고, 최소화 버튼을 추가하며, 스크롤 포커스 문제를 해결하여 마우스 휠이 즉시 작동하도록 개선.

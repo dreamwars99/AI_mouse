@@ -8,10 +8,12 @@
         Title="AI Mouse"
         WindowStyle="None"
         ResizeMode="CanResizeWithGrip"
+        Topmost="False"
         SizeToContent="Height"
         Width="400"
         MaxHeight="900"
         ShowInTaskbar="False"
+        PreviewMouseWheel="Window_PreviewMouseWheel"
         d:DesignHeight="400" d:DesignWidth="400">
     <Window.Resources>
         <Style TargetType="Window">
@@ -116,7 +118,8 @@
             </Border>
             
             <!-- 콘텐츠 영역 -->
-            <ScrollViewer Grid.Row="1" 
+            <ScrollViewer x:Name="MainScrollViewer"
+                          Grid.Row="1" 
                           VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled"
                           CanContentScroll="False"
