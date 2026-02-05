@@ -198,6 +198,9 @@ MessageBox.Show("AI Mouse가 백그라운드에서 실행되었습니다.\n트�
 - ✅ 투명 오버레이 윈도우 구현 완료 (Phase 1.3)
 - ✅ 드래그 사각형 시각화 구현 완료 (Phase 1.3)
 - ✅ `MainViewModel`에서 마우스 이벤트 구독 및 오버레이 제어 완료 (Phase 1.3)
+- ✅ `IScreenCaptureService` 및 `ScreenCaptureService` 구현 완료 (Phase 2.1)
+- ✅ `DpiHelper` 유틸리티 구현 완료 (Phase 2.1)
+- ✅ 화면 캡처 및 클립보드 복사 기능 구현 완료 (Phase 2.1)
 
 ---
 
@@ -276,22 +279,23 @@ public interface IGlobalHookService : IDisposable
 - `NativeMethods.cs`에 Win32 API P/Invoke 선언 완료 ✅
 - `Dispose()` 패턴으로 훅 해제 보장 ✅
 
-### 4.2. IScreenCaptureService
+### 4.2. IScreenCaptureService ✅ 구현 완료
 지정된 화면 영역을 이미지로 캡처합니다.
 
 ```csharp
 public interface IScreenCaptureService
 {
     Task<BitmapSource> CaptureRegionAsync(Rect region);
-    Task SaveToClipboardAsync(BitmapSource image);
-    Task<string> SaveToFileAsync(BitmapSource image, string path);
+    Task CopyToClipboardAsync(BitmapSource image);
 }
 ```
 
 **구현 세부사항:**
-- GDI+ (`Graphics.CopyFromScreen`) 사용
-- Per-Monitor DPI Awareness 적용 (좌표 보정)
-- `BitmapSource`로 변환하여 WPF UI 호환
+- GDI+ (`Graphics.CopyFromScreen`) 사용 ✅
+- 물리 좌표계 사용 (마우스 훅이 물리 좌표 제공) ✅
+- `System.Drawing.Bitmap` → WPF `BitmapSource` 변환 ✅
+- `System.Drawing.Common` 패키지 사용 ✅
+- 리소스 안전 관리 (`using` 문으로 자동 해제) ✅
 
 ### 4.3. IAudioRecorderService
 마이크 입력을 WAV 파일로 녹음합니다.
@@ -340,21 +344,19 @@ public interface IGeminiService
 ### 5.1. 캡처 데이터 흐름
 
 ```
-사용자 드래그 영역 (Screen Coordinates)
+사용자 드래그 영역 (물리 좌표 - Physical Coordinates)
     ↓
-OverlayWindow에서 Rect 계산
+MainViewModel.HandleMouseUp (물리 Rect 계산)
     ↓
-MainViewModel.CaptureRegion (Rect)
+ScreenCaptureService.CaptureRegionAsync(Rect) ✅
     ↓
-ScreenCaptureService.CaptureRegionAsync(Rect)
+GDI+ Bitmap 생성 (Graphics.CopyFromScreen) ✅
     ↓
-GDI+ Bitmap 생성
+BitmapSource 변환 (WPF 호환) ✅
     ↓
-BitmapSource 변환 (WPF 호환)
+Clipboard.SetImage (클립보드 복사) ✅
     ↓
-MemoryStream (API 전송용)
-    ↓
-GeminiService.SendMultimodalQueryAsync(image, audio, prompt)
+[Phase 3.1 예정] GeminiService.SendMultimodalQueryAsync(image, audio, prompt)
 ```
 
 ### 5.2. 오디오 데이터 흐름
@@ -418,10 +420,16 @@ protected override void OnExit(ExitEventArgs e)
 - **입력:** Settings 창에서 사용자 입력
 - **전송:** HTTPS로만 전송 (SDK 내장)
 
-### 7.2. DPI Awareness
+### 7.2. DPI Awareness ✅ 구현 완료
 
 - **Manifest:** `app.manifest`에 `<dpiAwareness>PerMonitorV2</dpiAwareness>` 설정
-- **좌표 변환:** `DpiHelper` 유틸리티로 멀티 모니터 환경 좌표 보정
+- **좌표 변환:** `DpiHelper` 유틸리티로 멀티 모니터 환경 좌표 보정 ✅
+- **구현 내용:**
+  - `Helpers/DpiHelper.cs` 생성 완료 ✅
+  - Win32 API (`GetDpiForMonitor`, `MonitorFromPoint`) P/Invoke 선언 추가 ✅
+  - 물리 좌표 ↔ 논리 좌표 변환 메서드 구현 ✅
+  - `PhysicalToLogicalRect` 메서드로 WPF OverlayWindow에 사용할 논리 좌표 변환 ✅
+  - `MainViewModel`의 `HandleMouseMove`에서 DPI 변환 적용 ✅
 
 ---
 
@@ -452,4 +460,4 @@ protected override void OnExit(ExitEventArgs e)
 ---
 
 **Last Updated:** 2026-02-05  
-**Version:** 1.5 (Phase 1.3 완료 - 투명 오버레이 윈도우 및 드래그 사각형 시각화 구현 완료)
+**Version:** 1.6 (Phase 2.1 완료 - DPI 보정 유틸리티 및 화면 캡처 서비스 구현 완료)

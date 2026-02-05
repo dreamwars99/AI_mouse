@@ -41,7 +41,10 @@ namespace AI_Mouse
             // 4. GlobalHookService를 싱글톤으로 등록
             services.AddSingleton<IGlobalHookService, GlobalHookService>();
 
-            // 5. ServiceProvider 빌드
+            // 5. ScreenCaptureService를 싱글톤으로 등록
+            services.AddSingleton<IScreenCaptureService, ScreenCaptureService>();
+
+            // 6. ServiceProvider 빌드
             _serviceProvider = services.BuildServiceProvider();
 
             // 6. MainWindow 인스턴스를 DI로 생성

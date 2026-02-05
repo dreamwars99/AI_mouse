@@ -2,6 +2,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using System;
 using System.Diagnostics;
 using System.Windows;
+using System.Windows.Media.Imaging;
+using AI_Mouse.Helpers;
 using AI_Mouse.Services.Interfaces;
 using AI_Mouse.Views;
 
@@ -13,10 +15,11 @@ namespace AI_Mouse.ViewModels
     public partial class MainViewModel : ObservableObject
     {
         private readonly IGlobalHookService _hookService;
+        private readonly IScreenCaptureService _captureService;
         private OverlayWindow? _overlayWindow;
         private OverlayViewModel? _overlayViewModel;
 
-        // 드래그 시작점 좌표 (화면 좌표계)
+        // 드래그 시작점 좌표 (화면 좌표계 - 물리 좌표)
         private int _dragStartX;
         private int _dragStartY;
 
@@ -24,9 +27,11 @@ namespace AI_Mouse.ViewModels
         /// MainViewModel 생성자
         /// </summary>
         /// <param name="hookService">전역 마우스 훅 서비스 (DI 주입)</param>
-        public MainViewModel(IGlobalHookService hookService)
+        /// <param name="captureService">화면 캡처 서비스 (DI 주입)</param>
+        public MainViewModel(IGlobalHookService hookService, IScreenCaptureService captureService)
         {
             _hookService = hookService ?? throw new ArgumentNullException(nameof(hookService));
+            _captureService = captureService ?? throw new ArgumentNullException(nameof(captureService));
 
             // 마우스 액션 이벤트 구독
             _hookService.MouseAction += OnMouseAction;
@@ -120,7 +125,8 @@ namespace AI_Mouse.ViewModels
         /// </summary>
         /// <remarks>
         /// 주의: MouseMove 이벤트는 매우 빈번하므로 로직을 가볍게 유지해야 합니다.
-        /// 현재는 1:1 매핑으로 구현되어 있으며, 향후 DPI 보정이 필요할 수 있습니다.
+        /// 마우스 훅은 물리 좌표를 제공하지만, WPF OverlayWindow는 논리 좌표를 사용하므로
+        /// DpiHelper를 통해 물리 좌표를 논리 좌표로 변환해야 올바르게 표시됩니다.
         /// </remarks>
         private void HandleMouseMove(int x, int y)
         {
@@ -130,21 +136,24 @@ namespace AI_Mouse.ViewModels
                 return;
             }
 
-            // 현재 좌표와 시작점을 이용해 Rect 계산
-            var rect = new Rect(
+            // 물리 좌표로 Rect 계산 (훅이 물리 좌표를 제공)
+            var physicalRect = new Rect(
                 Math.Min(_dragStartX, x),
                 Math.Min(_dragStartY, y),
                 Math.Abs(x - _dragStartX),
                 Math.Abs(y - _dragStartY));
 
-            // OverlayViewModel에 사각형 업데이트
-            _overlayViewModel.UpdateRect(rect);
+            // 물리 좌표를 논리 좌표로 변환 (WPF OverlayWindow에 표시하기 위해)
+            var logicalRect = DpiHelper.PhysicalToLogicalRect(physicalRect);
+
+            // OverlayViewModel에 사각형 업데이트 (논리 좌표 사용)
+            _overlayViewModel.UpdateRect(logicalRect);
         }
 
         /// <summary>
         /// 마우스 Up 이벤트 처리 (트리거 종료)
         /// </summary>
-        private void HandleMouseUp(int x, int y)
+        private async void HandleMouseUp(int x, int y)
         {
             // OverlayWindow 숨김
             if (_overlayWindow != null)
@@ -152,7 +161,7 @@ namespace AI_Mouse.ViewModels
                 _overlayWindow.Hide();
             }
 
-            // 최종 Rect 계산 및 로그 출력
+            // 최종 Rect 계산 (물리 좌표 - 캡처 서비스가 물리 좌표를 사용)
             var finalRect = new Rect(
                 Math.Min(_dragStartX, x),
                 Math.Min(_dragStartY, y),
@@ -165,6 +174,37 @@ namespace AI_Mouse.ViewModels
             if (_overlayViewModel != null)
             {
                 _overlayViewModel.Reset();
+            }
+
+            // 유효한 영역인 경우에만 캡처 수행
+            if (finalRect.Width > 0 && finalRect.Height > 0)
+            {
+                try
+                {
+                    // 화면 캡처 (물리 좌표 사용)
+                    var capturedImage = await _captureService.CaptureRegionAsync(finalRect);
+
+                    // 클립보드에 복사
+                    await _captureService.CopyToClipboardAsync(capturedImage);
+
+                    // 검증용 메시지 박스 출력
+                    MessageBox.Show(
+                        "캡처 완료! 클립보드를 확인하세요.",
+                        "캡처 성공",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+
+                    Debug.WriteLine($"[MainViewModel] 화면 캡처 및 클립보드 복사 완료: {finalRect.Width}x{finalRect.Height}");
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[MainViewModel] 화면 캡처 중 오류: {ex.Message}");
+                    MessageBox.Show(
+                        $"화면 캡처 중 오류가 발생했습니다:\n{ex.Message}",
+                        "오류",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                }
             }
         }
     }

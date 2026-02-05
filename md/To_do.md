@@ -2,7 +2,7 @@
 
 ## 📋 현재 상태 요약 (Current Status Summary)
 
-**프로젝트 상태:** Phase 1.3 완료 ✅ (투명 오버레이 윈도우 및 드래그 사각형 시각화 구현 완료)
+**프로젝트 상태:** Phase 2.1 완료 ✅ (DPI 보정 유틸리티 및 화면 캡처 서비스 구현 완료)
 
 **완료된 주요 기능:**
 - ✅ 프로젝트 생성 및 환경 설정 (.NET 8 WPF)
@@ -14,6 +14,9 @@
 - ✅ 전역 마우스 훅 구현 완료 (NativeMethods, IGlobalHookService, GlobalHookService)
 - ✅ 투명 오버레이 윈도우 구현 완료 (OverlayWindow, OverlayViewModel)
 - ✅ 드래그 사각형 시각화 구현 완료 (MainViewModel 이벤트 구독 및 오버레이 제어)
+- ✅ DPI 보정 유틸리티 구현 완료 (DpiHelper)
+- ✅ 화면 캡처 서비스 구현 완료 (IScreenCaptureService, ScreenCaptureService)
+- ✅ 클립보드 복사 기능 구현 완료
 
 ---
 
@@ -95,6 +98,17 @@
 - ✅ 트리거 버튼 Down → 오버레이 Show, Up → 오버레이 Hide 로직 구현
 - ✅ 드래그 중 사각형 시각화 로직 구현 (`UpdateRect` 메서드)
 
+### Phase 2.1: 화면 캡처 (Screen Capture) ✅ 완료
+- ✅ `Helpers/DpiHelper.cs` 생성 완료 (Win32 API P/Invoke 선언 및 좌표 변환 메서드)
+- ✅ `Helpers/NativeMethods.cs`에 DPI 관련 API 선언 추가 완료 (`GetDpiForMonitor`, `MonitorFromPoint`)
+- ✅ `Services/Interfaces/IScreenCaptureService.cs` 생성 완료 (인터페이스 정의)
+- ✅ `Services/Implementations/ScreenCaptureService.cs` 생성 완료 (GDI+ 기반 캡처 및 BitmapSource 변환)
+- ✅ `System.Drawing.Common` 패키지 추가 완료 (v8.0.0)
+- ✅ `MainViewModel`에 `IScreenCaptureService` 주입 및 캡처 로직 구현 완료
+- ✅ `HandleMouseMove`에 DPI 변환 로직 적용 완료 (`DpiHelper.PhysicalToLogicalRect`)
+- ✅ `HandleMouseUp`에 화면 캡처 및 클립보드 복사 로직 구현 완료
+- ✅ `App.xaml.cs`에 `IScreenCaptureService` 싱글톤 등록 완료
+
 ---
 
 ## 🧊 Backlog (예정된 작업)
@@ -147,20 +161,21 @@
 
 ### 🟡 Medium Priority (중간 우선순위)
 
-#### Phase 2.1: 화면 캡처 (Screen Capture)
-- [ ] **ScreenCaptureService 구현**
-  - [ ] `Services/Interfaces/IScreenCaptureService.cs` 생성
-  - [ ] `Services/Implementations/ScreenCaptureService.cs` 구현
-  - [ ] GDI+ (`System.Drawing.Common`) 설치 및 사용
-  - [ ] 지정된 Rect 영역 캡처 로직
-  - [ ] `BitmapSource` 변환 (WPF 호환)
-  - [ ] `MemoryStream` 저장 (API 전송용)
-  - [ ] 시스템 클립보드 복사 기능
+#### Phase 2.1: 화면 캡처 (Screen Capture) ✅ 완료
+- [x] **ScreenCaptureService 구현** ✅
+  - [x] `Services/Interfaces/IScreenCaptureService.cs` 생성 ✅
+  - [x] `Services/Implementations/ScreenCaptureService.cs` 구현 ✅
+  - [x] GDI+ (`System.Drawing.Common`) 설치 및 사용 ✅
+  - [x] 지정된 Rect 영역 캡처 로직 ✅
+  - [x] `BitmapSource` 변환 (WPF 호환) ✅
+  - [x] 시스템 클립보드 복사 기능 ✅
 
-- [ ] **DPI 보정**
-  - [ ] `Helpers/DpiHelper.cs` 생성
-  - [ ] Per-Monitor DPI 좌표 변환 로직
-  - [ ] 멀티 모니터 환경 대응
+- [x] **DPI 보정** ✅
+  - [x] `Helpers/DpiHelper.cs` 생성 ✅
+  - [x] Per-Monitor DPI 좌표 변환 로직 ✅
+  - [x] 멀티 모니터 환경 대응 ✅
+  - [x] `NativeMethods`에 DPI 관련 P/Invoke 선언 추가 ✅
+  - [x] `MainViewModel`의 `HandleMouseMove`에 DPI 변환 적용 ✅
 
 #### Phase 2.2: 음성 녹음 (Audio Recording)
 - [ ] **NAudio 패키지 설치**
@@ -248,4 +263,4 @@
 
 ---
 
-**마지막 업데이트**: 2026-02-05 (Phase 1.3 완료 - 투명 오버레이 윈도우 및 드래그 사각형 시각화 구현 완료)
+**마지막 업데이트**: 2026-02-05 (Phase 2.1 완료 - DPI 보정 유틸리티 및 화면 캡처 서비스 구현 완료)

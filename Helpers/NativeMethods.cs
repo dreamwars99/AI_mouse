@@ -106,5 +106,60 @@ namespace AI_Mouse.Helpers
             public const int WM_XBUTTONDOWN = 0x020B;
             public const int WM_XBUTTONUP = 0x020C;
         }
+
+        /// <summary>
+        /// DPI Awareness 타입
+        /// </summary>
+        public enum DpiAwareness
+        {
+            Invalid = -1,
+            Unaware = 0,
+            SystemAware = 1,
+            PerMonitorAware = 2,
+            PerMonitorAwareV2 = 3,
+            UnawareGdiScaled = 4
+        }
+
+        /// <summary>
+        /// Monitor DPI 타입
+        /// </summary>
+        public enum MonitorDpiType
+        {
+            EffectiveDpi = 0,
+            AngularDpi = 1,
+            RawDpi = 2,
+            Default = EffectiveDpi
+        }
+
+        /// <summary>
+        /// MonitorFromPoint 플래그
+        /// </summary>
+        public enum MonitorFromPointFlags
+        {
+            MONITOR_DEFAULTTONULL = 0x00000000,
+            MONITOR_DEFAULTTOPRIMARY = 0x00000001,
+            MONITOR_DEFAULTTONEAREST = 0x00000002
+        }
+
+        /// <summary>
+        /// 지정된 포인트의 모니터 핸들을 가져옵니다.
+        /// </summary>
+        /// <param name="pt">화면 좌표계의 포인트</param>
+        /// <param name="dwFlags">플래그</param>
+        /// <returns>모니터 핸들</returns>
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        public static extern IntPtr MonitorFromPoint(Point pt, MonitorFromPointFlags dwFlags);
+
+        /// <summary>
+        /// 모니터의 DPI 값을 가져옵니다.
+        /// </summary>
+        /// <param name="hmonitor">모니터 핸들</param>
+        /// <param name="dpiType">DPI 타입</param>
+        /// <param name="dpiX">X축 DPI (출력 파라미터)</param>
+        /// <param name="dpiY">Y축 DPI (출력 파라미터)</param>
+        /// <returns>성공 여부</returns>
+        [DllImport("shcore.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool GetDpiForMonitor(IntPtr hmonitor, MonitorDpiType dpiType, out uint dpiX, out uint dpiY);
     }
 }

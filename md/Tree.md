@@ -44,14 +44,14 @@ AI_Mouse/
 ├── Services/                      # [Core] 비즈니스 로직 및 시스템 제어 ✅ 생성됨
 │   ├── Interfaces/                # 서비스 인터페이스 ✅ 생성됨
 │   │   ├── IGlobalHookService.cs          # [Phase 1.2] 전역 입력 감지 ✅ 생성됨
-│   │   ├── IScreenCaptureService.cs       # [Phase 2.1] 화면 캡처 ⏳ 생성 예정
+│   │   ├── IScreenCaptureService.cs       # [Phase 2.1] 화면 캡처 ✅ 생성됨
 │   │   ├── IAudioRecorderService.cs       # [Phase 2.2] 음성 녹음 ⏳ 생성 예정
 │   │   ├── IGeminiService.cs              # [Phase 3.1] Gemini API ⏳ 생성 예정
 │   │   └── ITrayService.cs                # 트레이 아이콘 관리 ⏳ 생성 예정
 │   │
 │   └── Implementations/           # 서비스 구현체 ✅ 생성됨
 │       ├── GlobalHookService.cs            # [Phase 1.2] Win32 Hook 구현 ✅ 생성됨
-│       ├── ScreenCaptureService.cs        # [Phase 2.1] GDI+ 캡처 구현 ⏳ 생성 예정
+│       ├── ScreenCaptureService.cs        # [Phase 2.1] GDI+ 캡처 구현 ✅ 생성됨
 │       ├── AudioRecorderService.cs        # [Phase 2.2] NAudio 녹음 구현 ⏳ 생성 예정
 │       ├── GeminiService.cs               # [Phase 3.1] API 클라이언트 구현 ⏳ 생성 예정
 │       └── TrayService.cs                 # 트레이 아이콘 구현 ⏳ 생성 예정
@@ -64,7 +64,7 @@ AI_Mouse/
 │
 ├── Helpers/                       # [Util] Win32 Interop, 컨버터 등 ✅ 생성됨
 │   ├── NativeMethods.cs           # [Phase 1.2] Win32 P/Invoke 선언 ✅ 생성됨
-│   ├── DpiHelper.cs               # [Phase 2.1] DPI 좌표 변환 유틸리티 ⏳ 생성 예정
+│   ├── DpiHelper.cs               # [Phase 2.1] DPI 좌표 변환 유틸리티 ✅ 생성됨
 │   └── Converters/                # WPF Value Converter
 │       └── (필요 시 추가)
 │
@@ -157,7 +157,8 @@ App.xaml.cs (Bootstrapper)
 │   │   ├── Transient: MainWindow ✅
 │   │   ├── Transient: OverlayViewModel ✅ (Phase 1.3)
 │   │   ├── Transient: OverlayWindow ✅ (Phase 1.3)
-│   │   └── Singleton: IGlobalHookService → GlobalHookService ✅
+│   │   ├── Singleton: IGlobalHookService → GlobalHookService ✅
+│   │   └── Singleton: IScreenCaptureService → ScreenCaptureService ✅ (Phase 2.1)
 │   │
 │   ├── ServiceProvider 빌드 ✅
 │   ├── MainWindow 인스턴스 생성 (DI) ✅
@@ -397,4 +398,4 @@ graph LR
 ---
 
 **Last Updated:** 2026-02-05  
-**Version:** 1.5 (Phase 1.3 완료 - 투명 오버레이 윈도우 및 드래그 사각형 시각화 구현 완료)
+**Version:** 1.6 (Phase 2.1 완료 - DPI 보정 유틸리티 및 화면 캡처 서비스 구현 완료)
