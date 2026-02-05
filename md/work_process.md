@@ -4,7 +4,7 @@
 - **Role:** Lead Architect & Cursor AI
 - **Framework:** .NET 8 (WPF)
 - **Platform:** Windows 10 / 11 Desktop
-- **Last Updated:** 2026-02-05 (API Key 외부 파일 분리 완료 - 보안 강화 및 GitHub 유출 방지)
+- **Last Updated:** 2026-02-05 (Gemini 모델 ID 변경 및 URL 동적 생성 로직 개선 완료)
 
 ## 📌 1. Development Environment (개발 환경 상세)
 이 프로젝트를 이어받는 AI/개발자는 아래 설정을 필수로 확인해야 합니다.
@@ -87,6 +87,46 @@ AI_Mouse/
 
 
 ****## 📅 4. Development Log (개발 기록)
+
+### 2026-02-05 (목) - Gemini 모델 ID 변경 및 URL 동적 생성 로직 개선 (16차)
+**[목표]** 사용자의 환경에 맞춰 Gemini 모델 ID를 `gemini-1.5-pro`에서 **`gemini-2.5-flash`**로 변경하고, URL 생성 로직을 유연하게 개선하여 향후 모델 변경 시 코드 수정을 최소화.
+
+#### Dev Action (Gemini Model ID & URL Dynamic Generation)
+- **Services/Implementations/GeminiService.cs 수정:**
+  - 모델 ID 상수 분리:
+    - 클래스 최상단에 `private const string ModelId = "gemini-2.5-flash";` 상수 정의
+    - API 버전도 상수로 분리: `private const string ApiVersion = "v1beta";`
+    - 사용자 환경에 따라 `gemini-1.5-flash`, `gemini-2.5-flash` 등으로 쉽게 변경 가능하도록 구조화
+  - URL 생성 로직 수정:
+    - 하드코딩된 URL `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key={apiKey}` 제거
+    - 상수를 사용한 동적 URL 생성으로 변경:
+      ```csharp
+      string endpoint = $"https://generativelanguage.googleapis.com/{ApiVersion}/models/{ModelId}:generateContent?key={apiKey}";
+      ```
+    - 404 오류 방지를 위해 URL 구조 정확성 재확인
+  - 디버그 로그 강화:
+    - 요청 시작 시 사용 중인 모델 ID를 명확히 로그에 출력:
+      ```csharp
+      System.Diagnostics.Debug.WriteLine($"[Gemini API] Target Model: {ModelId}");
+      ```
+    - 디버깅 시 어떤 모델을 사용하는지 즉시 확인 가능
+
+#### Tech Details
+- **모델 ID 관리:** 상수로 분리하여 코드 상단에서 한 번만 수정하면 전체 적용
+- **URL 동적 생성:** 문자열 보간(String Interpolation)을 사용하여 유연한 URL 생성
+- **유지보수성 향상:** 향후 모델 변경 시 상수 값만 변경하면 됨
+- **디버그 지원:** 로그 출력으로 실제 사용 중인 모델 확인 가능
+- **404 오류 방지:** URL 구조를 정확히 검증하여 API 호출 실패 방지
+
+#### Current Status
+- ✅ `GeminiService.cs`에 모델 ID 상수(`ModelId = "gemini-2.5-flash"`) 추가 완료
+- ✅ `GeminiService.cs`에 API 버전 상수(`ApiVersion = "v1beta"`) 추가 완료
+- ✅ URL 생성 로직을 동적 생성으로 변경 완료 (상수 사용)
+- ✅ 디버그 로그에 모델 ID 출력 추가 완료 (`System.Diagnostics.Debug.WriteLine`)
+- ✅ Linter 에러 없음 확인 완료
+- 모델 ID 변경 및 URL 동적 생성 로직 개선 완료, 향후 모델 변경 시 유지보수 용이
+
+---
 
 ### 2026-02-05 (목) - API Key 외부 파일 분리: 보안 강화 및 GitHub 유출 방지 (15차)
 **[목표]** API Key가 GitHub에 유출되는 것을 막기 위해, 외부 파일(`apikey.txt`)에서 키를 로드하는 안전한 구조로 변경하여 보안을 강화.

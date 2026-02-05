@@ -295,7 +295,7 @@ namespace AI_Mouse.Services.Implementations
     public class GlobalHookService : IGlobalHookService { }
     public class ScreenCaptureService : IScreenCaptureService { }
     public class AudioRecorderService : IAudioRecorderService { }
-    public class GeminiService : IGeminiService { } // ✅ Phase 3.1 완료
+    public class GeminiService : IGeminiService { } // ✅ Phase 3.1 완료, 모델 ID: gemini-2.5-flash (16차)
     public class TrayService : ITrayService { }
 }
 
@@ -403,4 +403,4 @@ graph LR
 ---
 
 **Last Updated:** 2026-02-05  
-**Version:** 2.1 (API Key 외부 파일 분리 완료 - 보안 강화 및 GitHub 유출 방지)
+**Version:** 2.2 (Gemini 모델 ID 변경 및 URL 동적 생성 로직 개선 완료)

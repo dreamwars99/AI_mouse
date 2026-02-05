@@ -14,6 +14,10 @@ namespace AI_Mouse.Services.Implementations
     /// </summary>
     public class GeminiService : IGeminiService
     {
+        // 사용자 환경에 따라 'gemini-1.5-flash', 'gemini-2.5-flash' 등으로 변경 가능
+        private const string ModelId = "gemini-2.5-flash";
+        private const string ApiVersion = "v1beta";
+
         private readonly HttpClient _httpClient;
 
         /// <summary>
@@ -41,6 +45,9 @@ namespace AI_Mouse.Services.Implementations
 
             try
             {
+                // 사용 중인 모델 ID 로그 출력
+                System.Diagnostics.Debug.WriteLine($"[Gemini API] Target Model: {ModelId}");
+
                 // 이미지를 Base64로 변환
                 string imageBase64 = ConvertImageToBase64(image);
 
@@ -81,8 +88,8 @@ namespace AI_Mouse.Services.Implementations
                 string jsonBody = JsonConvert.SerializeObject(requestBody);
                 var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
 
-                // API 엔드포인트
-                string endpoint = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key={apiKey}";
+                // API 엔드포인트 (동적 생성)
+                string endpoint = $"https://generativelanguage.googleapis.com/{ApiVersion}/models/{ModelId}:generateContent?key={apiKey}";
 
                 // HTTP POST 요청
                 HttpResponseMessage response = await _httpClient.PostAsync(endpoint, content);

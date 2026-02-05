@@ -22,7 +22,8 @@
 - ✅ 마이크 음성 녹음 및 WAV 파일 저장 기능 구현 완료
 - ✅ Newtonsoft.Json 패키지 설치 완료 (v13.0.3)
 - ✅ Gemini API 서비스 구현 완료 (IGeminiService, GeminiService)
-- ✅ HttpClient 기반 Gemini 1.5 Pro API 통신 기능 구현 완료
+- ✅ HttpClient 기반 Gemini API 통신 기능 구현 완료
+- ✅ Gemini 모델 ID를 `gemini-2.5-flash`로 변경 및 URL 동적 생성 로직 개선 완료 (16차)
 - ✅ Markdig.Wpf 패키지 설치 완료 (v0.5.0.1)
 - ✅ ResultViewModel 구현 완료 (ViewModels/ResultViewModel.cs)
 - ✅ ResultWindow 구현 완료 (Views/ResultWindow.xaml, ResultWindow.xaml.cs)
@@ -331,4 +332,4 @@
 
 ---
 
-**마지막 업데이트**: 2026-02-05 (API Key 외부 파일 분리 완료 - 보안 강화 및 GitHub 유출 방지)
+**마지막 업데이트**: 2026-02-05 (Gemini 모델 ID 변경 및 URL 동적 생성 로직 개선 완료)
